@@ -6,6 +6,7 @@ State is stored through services/lifecycle/store.py (Postgres via DATABASE_URL, 
 # FastAPI evaluates dependency declarations when registering routes.
 # ruff: noqa: B008
 
+import json
 import time
 from typing import Annotated, Literal
 
@@ -172,7 +173,7 @@ class Booking(LifecycleBody):
     slot_at: int = Field(ge=0, le=cfg()["booking"]["max_slot_timestamp"])
 
 
-def register(app, roles, db_session, limit) -> None:
+def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
     def tokens(db: Session) -> CascadeTokens:  # secret read at request time; single-use nonces live in the database
         t = CascadeTokens(secret("KINSIGHT_TOKEN_SECRET"))
         t.used = store.UsedNonces(db)
@@ -186,8 +187,9 @@ def register(app, roles, db_session, limit) -> None:
         return store.sample_get(db, identity.actor.id, time.time())
 
     def tracker_view(s: tracking.Sample) -> dict:
-        return {"stages": cfg()["lab_stages"], "stage": s.stage, "qc_failure": s.qc_failure,
-                "times": {str(k): v for k, v in s.times.items()}}
+        stages = cfg()["lab_stages"]
+        return {"stages": stages, "stage": s.stage, "qc_failure": s.qc_failure,
+                "times": {stages[k - 1]: v for k, v in s.times.items()}}
 
     @app.post("/api/lifecycle/measures/mmic")
     async def mmic(body: Mmic, identity=Depends(roles("person")), db: Session = Depends(db_session)):
@@ -348,10 +350,18 @@ def register(app, roles, db_session, limit) -> None:
 
     @app.get("/api/lifecycle/tracker")
     async def tracker(identity=Depends(roles(*PERSON)), db: Session = Depends(db_session)):
+        if signed_feed and identity.actor.role == "person":
+            subject = identity.actor.id
+            own(db, identity, "sandbox_report", {"status"})
+            row = store.lab_sample(db, subject)
+            sample = tracking.Sample(row.barcode, row.stage, {int(k): v for k, v in json.loads(row.times).items()})
+            return {**tracker_view(sample), "source": "signed_lab", "is_synthetic": True}
         return {**tracker_view(sample_of(db, identity)), "is_synthetic": True}
 
     @app.post("/api/lifecycle/tracker/advance")
     async def tracker_advance(identity=Depends(roles(*PERSON)), db: Session = Depends(db_session)):
+        if signed_feed:
+            raise HTTPException(403, "Use the signed lab feed")
         s = sample_of(db, identity)
         if s.qc_failure or s.stage >= len(cfg()["lab_stages"]):
             raise HTTPException(409, "Nothing to advance")

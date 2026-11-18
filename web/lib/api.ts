@@ -31,7 +31,7 @@ export const PedigreeS = z.object({
   relationships: z.array(RelS), warnings: z.array(z.string()),
 });
 
-export const TrackerS = z.object({ stages: z.array(z.string()).length(8), stage: z.number().int().min(1).max(8), qc_failure: z.string().nullable(), times: z.record(z.string(), z.number()) });
+export const TrackerS = z.object({ stages: z.array(z.string()).length(8), stage: z.number().int().min(1).max(8), qc_failure: z.string().nullable(), times: z.record(z.string(), z.number()), source: z.literal("signed_lab").optional() });
 export const CertificateS = z.object({ days_left: z.number().min(0).max(90), expired: z.boolean(), alert_at: z.union([z.literal(60), z.literal(30), z.literal(14), z.literal(7)]).nullable(), genetic_compatibility: z.literal("permanent"), locked: z.boolean().optional(), locked_reason: z.literal("teach_back").optional() });
 export const PairingS = z.object({ id: z.string(), pin: z.string().regex(/^\d{9}$/), expires_in: z.number().nonnegative() });
 export const PairingStatusS = z.object({ status: z.enum(["pending", "active", "revoked", "expired"]) });

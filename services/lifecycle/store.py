@@ -157,6 +157,13 @@ def sample_save(db: Session, owner: str, s: tracking.Sample) -> None:
     db.commit()
 
 
+def lab_sample(db: Session, owner: str, *, for_update: bool = False) -> LcSample:
+    key = "signed-lab:" + owner
+    return db.get(LcSample, key, with_for_update=for_update) or LcSample(
+        owner=key, barcode="SIGNED-DEMO-" + owner[-1].upper(), stage=1, times="{}",
+    )
+
+
 # cascade tokens: single use survives restarts and multiple workers (the nonce is a primary key) -------------------------
 class UsedNonces:
     def __init__(self, db: Session) -> None:

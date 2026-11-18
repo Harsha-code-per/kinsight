@@ -47,9 +47,9 @@ from services.consent.policy import (
 )
 from services.consent.roles import PERSONAS
 from services.consent.settings import settings
-from services.lifecycle.store import LifecycleBase, SandboxReport
+from services.lifecycle.store import LcSample, LifecycleBase, SandboxReport
 
-from . import lifecycle_routes, pilot_routes
+from . import lab_feed, lifecycle_routes, pilot_routes
 from .auth import Identity, issue_token, secret, verify_token
 from .backend import DemoBackend
 from .interfaces import Backend, Unavailable, UnwiredBackend
@@ -111,12 +111,16 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
     engine = create_engine(url, **options)
     sessions = sessionmaker(engine, expire_on_commit=False)
     demo = os.environ.get("KINSIGHT_DEMO") == "1"
+    sandbox = demo and os.environ.get("KINSIGHT_LAB_SANDBOX") == "1"
+    signed_feed = sandbox and bool(os.environ.get(lab_feed.SIGNING_SECRET))
     adapter = backend or (DemoBackend() if demo else UnwiredBackend())
 
     @asynccontextmanager
     async def lifespan(app):
         secret("KINSIGHT_TOKEN_SECRET")
         secret("KINSIGHT_AUDIT_SALT")
+        if signed_feed and secret(lab_feed.SIGNING_SECRET) in {secret("KINSIGHT_TOKEN_SECRET"), secret("KINSIGHT_AUDIT_SALT")}:
+            raise RuntimeError("The lab signing secret must be distinct from the token and audit secrets")
         Base.metadata.create_all(engine)
         LifecycleBase.metadata.create_all(engine)
         if isinstance(adapter, DemoBackend):
@@ -305,6 +309,7 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
         subject = identity.actor.id
         await adapter.delete_person(subject, db)
         db.execute(delete(SandboxReport).where(SandboxReport.subject_id == subject))
+        db.execute(delete(LcSample).where(LcSample.owner.in_([subject, "signed-lab:" + subject])))
         couples = select(Couple.id).where(
             or_(Couple.person_a == subject, Couple.person_b == subject)
         )
@@ -749,15 +754,17 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
         return endpoint
 
     if enabled("lifecycle"):
-        lifecycle_routes.register(app, roles, db_session, limit)
+        lifecycle_routes.register(app, roles, db_session, limit, own=own, signed_feed=signed_feed)
 
     for operation in ("reset", "load-cohort"):
         app.add_api_route(
             f"/api/demo/{operation}", demo_route(operation), methods=["POST"], response_model=Status
         )
 
-    if demo and os.environ.get("KINSIGHT_LAB_SANDBOX") == "1":
-        pilot_routes.register(app, db_session=db_session, roles=roles, check=check, own=own, limit=limit)
+    if sandbox:
+        pilot_routes.register(app, db_session=db_session, roles=roles, check=check, own=own, limit=limit, signed_feed=signed_feed)
+    if signed_feed:
+        lab_feed.register(app, db_session, limit)
     return app
 
 

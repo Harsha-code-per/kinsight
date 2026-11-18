@@ -25,7 +25,8 @@ function JourneyCards({ persona }: { persona: string }) {
   const [pin, setPin] = useState("");
   const [condition, setCondition] = useState(DATA.cohort.carriers[0].condition_id);
   const [token, setToken] = useState("");
-  const tracker = useQuery({ queryKey: ["journey", persona, "tracker"], queryFn: api.tracker });
+  const tracker = useQuery({ queryKey: ["journey", persona, "tracker"], queryFn: api.tracker,
+    refetchInterval: (query) => query.state.data?.source === "signed_lab" ? 5000 : false });
   const certificate = useQuery({ queryKey: ["journey", persona, "certificate", elapsed], queryFn: () => api.certificate(elapsed) });
   const receipt = useQuery({ queryKey: ["journey", persona, "receipt"], queryFn: api.receipt });
   const status = useQuery({ queryKey: ["journey", persona, "pairing", pair?.id], queryFn: () => api.pairing(pair!.id), enabled: !!pair, refetchInterval: 1000 });
@@ -48,6 +49,7 @@ function JourneyCards({ persona }: { persona: string }) {
     {[tracker, certificate, receipt].some((q) => q.isPending) && <p role="status">{t("lifecycle.loading")}</p>}
     <section className="card space-y-4" aria-labelledby="lab-title">
       <h2 id="lab-title" className="text-lg font-semibold">{t("lifecycle.lab")}</h2>
+      {tracker.data?.source === "signed_lab" && <p className="text-sm text-muted">{t("lifecycle.labSource")}</p>}
       <ol className="space-y-2">
         {tracker.data?.stages.map((stage, i) => <li key={stage} aria-current={tracker.data.stage === i + 1 ? "step" : undefined}
           className={`border-s-4 py-2 ps-4 ${tracker.data.stage === i + 1 ? "border-brand-600 bg-brand-50 font-semibold text-brand-800" : "border-line"}`}>

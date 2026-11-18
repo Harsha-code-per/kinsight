@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session, aliased
 
 from services.consent import sharing
 from services.consent.models import Consent
-from services.consent.policy import ResourceRef
+from services.consent.policy import Actor, ResourceRef
 from services.lifecycle.store import SandboxReport
 
 from .auth import secret
@@ -71,29 +71,31 @@ def latest(db: Session, subject_id: str) -> SandboxReport | None:
     )
 
 
-def register(app, *, db_session, roles, check, own, limit):
+def record_intake(db: Session, body: SandboxIntake, actor: Actor) -> ScreeningReport:
+    report = from_synthetic_fhir(
+        body.resource.model_dump(), subject_id=body.subject_id, revision=body.revision,
+        panel_version="synthetic-panel-v1", findings=body.findings,
+    )
+    if report.report_id != f"{body.subject_id}-report":
+        raise ValueError("Report does not match the assigned sandbox stream")
+    row = db.get(SandboxReport, (body.subject_id, body.revision))
+    if row is not None:
+        if ScreeningReport.model_validate_json(row.payload) != report:
+            raise HTTPException(409, "Conflicting report revision")
+    else:
+        db.add(SandboxReport(subject_id=body.subject_id, revision=body.revision, payload=report.model_dump_json()))
+        sharing.log_change(db, actor, report.report_id, "sandbox_lab_received", secret("KINSIGHT_AUDIT_SALT"))
+    return report
+
+
+def register(app, *, db_session, roles, check, own, limit, signed_feed=False):
     @app.post("/api/sandbox/lab/reports")
     def intake(body: SandboxIntake, identity=Depends(roles("demo_operator")), db: Session = Depends(db_session)):
+        if signed_feed:
+            raise HTTPException(403, "Use the signed lab feed")
         limit(db, identity)
-        report = from_synthetic_fhir(
-            body.resource.model_dump(),
-            subject_id=body.subject_id,
-            revision=body.revision,
-            panel_version="synthetic-panel-v1",
-            findings=body.findings,
-        )
-        if report.report_id != f"{body.subject_id}-report":
-            raise ValueError("Report does not match the assigned sandbox stream")
-        row = db.get(SandboxReport, (body.subject_id, body.revision))
-        if row is not None:
-            if ScreeningReport.model_validate_json(row.payload) != report:
-                raise HTTPException(409, "Conflicting report revision")
-        else:
-            db.add(SandboxReport(subject_id=body.subject_id, revision=body.revision, payload=report.model_dump_json()))
-            sharing.log_change(
-                db, identity.actor, report.report_id, "sandbox_lab_received", secret("KINSIGHT_AUDIT_SALT")
-            )
-            db.commit()
+        record_intake(db, body, identity.actor)
+        db.commit()
         return {"revision": body.revision, "is_synthetic": True}
 
     @app.get("/api/me/sandbox-report")

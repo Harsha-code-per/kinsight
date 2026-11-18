@@ -1,9 +1,12 @@
 import time
 
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
+from services.consent.audit import verify_chain
 from services.consent.models import AuditEvent, Base, Consent
 from services.consent.policy import Actor, ResourceRef, decide
 
@@ -64,3 +67,47 @@ def test_scope_purpose_expiry_owner_first_and_revocation(db):
     grant.revoked_at = None
     grant.expires_at = time.time() - 1
     assert not check().allowed
+
+
+@settings(max_examples=40, deadline=None)
+@given(
+    requested=st.sets(st.sampled_from(["status", "panel_version", "condition_id"])),
+    granted=st.sets(st.sampled_from(["status", "panel_version"])),
+    matching_condition=st.booleans(),
+    active=st.booleans(),
+    unknown_field=st.booleans(),
+)
+def test_family_projection_and_revocation(requested, granted, matching_condition, active, unknown_field):
+    engine = create_engine("sqlite://")
+    try:
+        Base.metadata.create_all(engine)
+        with Session(engine) as session:
+            consent = Consent(
+                grantor_id="a",
+                grantee_id="b",
+                resource_type="result",
+                resource_id="r",
+                scope="condition_findings",
+                fields=sorted(granted),
+                condition_ids=["COND_001"],
+                purpose="family_notification",
+                expires_at=time.time() + (60 if active else -1),
+                text_shown_hash="a" * 64,
+            )
+            session.add(consent)
+            session.flush()
+            actor = Actor("b", "relative")
+            resource = ResourceRef("result", "r", "a", "COND_001" if matching_condition else "COND_002", True)
+            fields = requested | {"private"} if unknown_field else requested
+            decision = decide(actor, resource, "family_notification", fields, session=session, audit_salt=SALT)
+            permitted = requested & granted if active and matching_condition and not unknown_field else set()
+            assert decision.allowed_fields == permitted
+            assert decision.allowed is bool(permitted)
+            consent.revoked_at = time.time()
+            session.flush()
+            revoked = decide(actor, resource, "family_notification", fields, session=session, audit_salt=SALT)
+            assert not revoked.allowed and not revoked.allowed_fields
+            assert len(session.scalars(select(AuditEvent)).all()) == 2
+            assert verify_chain(session)
+    finally:
+        engine.dispose()

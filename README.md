@@ -12,10 +12,8 @@ keeps a genetic counsellor in the loop, and never tells anyone what to decide.
 [![Live demo](https://img.shields.io/badge/live%20demo-kinsight--five.vercel.app-1d7f7a?style=for-the-badge)](https://kinsight-five.vercel.app)
 
 [![CI](https://github.com/loktrishal-05/kinsight/actions/workflows/ci.yml/badge.svg)](https://github.com/loktrishal-05/kinsight/actions/workflows/ci.yml)
-![Next.js](https://img.shields.io/badge/Next.js-14-18272c)
 ![Languages](https://img.shields.io/badge/languages-7-33417f)
 [![License: MIT](https://img.shields.io/badge/license-MIT-1d7f7a)](LICENSE)
-![Tests](https://img.shields.io/badge/tests-585%20passing-1d7f7a)
 
 Built for the **Future Health Digital Innovation Challenge, Challenge 03**.
 
