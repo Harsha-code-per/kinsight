@@ -25,7 +25,7 @@ Built for the **Future Health Digital Innovation Challenge, Challenge 03**.
 
 <img src="docs/screenshots/01-landing.jpg" alt="KinSight landing page: a sunlit 3D lattice screen behind the headline" width="100%" />
 
-> **Fictional demo.** Every person, family and result in KinSight is synthetic. No real genomes or personal data exist anywhere in the system.
+> **Fictional demo.** The demo’s people, families and results are synthetic. The separate **Compare your lab reports** page lets you open text-based PDFs and compare the findings you enter in your browser. See [report comparison](docs/REAL_DATA_ROLLOUT.md#compare-existing-lab-reports).
 
 </div>
 

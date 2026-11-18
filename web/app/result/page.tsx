@@ -1,6 +1,7 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, MessageSquareText } from "lucide-react";
+import Link from "next/link";
 import { Notice, PageHeader, StatusChip } from "@/components/ui";
 import { ReadAloud } from "@/components/Voice";
 import { api } from "@/lib/api";
@@ -15,7 +16,8 @@ export default function MyResult() {
   const talk = useMutation({ mutationFn: () => api.requestCounselling(), onSuccess: () => qc.invalidateQueries({ queryKey: ["referral"] }) });
   return (
     <section className="space-y-6">
-      <PageHeader title={t("result.title")} lead={t("result.lead")} />
+      <PageHeader title={t("result.title")} lead={t("result.lead")}
+        action={<Link className="btn-quiet" href="/report-compare">{t("reportCompare.title")}</Link>} />
       <div className="card-flush" data-demo="results">
         {results.isLoading && <p className="p-5 text-muted">{t("loading")}</p>}
         <ul className="px-5">

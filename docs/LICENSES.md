@@ -35,13 +35,13 @@ KinSight's own code and wording are [MIT](../LICENSE). Licenses below are each p
 | BSD-2-Clause | 1 | Pygments 2.21.0 |
 | MPL-2.0 **(copyleft)** | 1 | hypothesis 6.168.5 |
 
-## Web runtime (npm, production) (38 packages)
+## Web runtime (npm, production) (41 packages)
 
 | License | Count | Packages |
 | --- | --- | --- |
-| MIT | 15 | @img/colour 1.1.0, @next/env 16.4.6, @next/swc-win32-x64-msvc 16.4.6, @tanstack/query-core 5.59.0, @tanstack/react-query 5.59.0, client-only 0.0.1, nanoid 3.3.20, next 16.4.6, postcss 8.5.23, react 19.2.9, react-dom 19.2.9, scheduler 0.27.0, styled-jsx 5.1.6, three 0.169.0, zod 4.6.7 |
+| MIT | 17 | @img/colour 1.1.0, @napi-rs/canvas 1.1.1, @napi-rs/canvas-win32-x64-msvc 1.1.1, @next/env 16.4.6, @next/swc-win32-x64-msvc 16.4.6, @tanstack/query-core 5.59.0, @tanstack/react-query 5.59.0, client-only 0.0.1, nanoid 3.3.20, next 16.4.6, postcss 8.5.23, react 19.2.9, react-dom 19.2.9, scheduler 0.27.0, styled-jsx 5.1.6, three 0.169.0, zod 4.6.7 |
 | OFL-1.1 | 9 | @fontsource-variable/bricolage-grotesque 5.3.0, @fontsource-variable/noto-sans-arabic 5.3.0, @fontsource-variable/noto-sans-devanagari 5.3.0, @fontsource-variable/noto-sans-kannada 5.3.0, @fontsource-variable/noto-sans-malayalam 5.3.0, @fontsource-variable/noto-sans-tamil 5.3.0, @fontsource-variable/noto-sans-telugu 5.3.0, @fontsource-variable/plus-jakarta-sans 5.3.0, @fontsource/reem-kufi 5.3.0 |
-| Apache-2.0 | 7 | @playwright/test 1.65.1, @swc/helpers 0.5.23, baseline-browser-mapping 2.11.32, detect-libc 2.1.2, playwright 1.65.1, playwright-core 1.65.1, sharp 0.35.5 |
+| Apache-2.0 | 8 | @playwright/test 1.65.1, @swc/helpers 0.5.23, baseline-browser-mapping 2.11.32, detect-libc 2.1.2, pdfjs-dist 6.5.438, playwright 1.65.1, playwright-core 1.65.1, sharp 0.35.5 |
 | ISC | 3 | lucide-react 0.453.0, picocolors 1.1.1, semver 7.8.6 |
 | 0BSD | 1 | tslib 2.9.1 |
 | Apache-2.0 AND LGPL-3.0-or-later **(copyleft)** | 1 | @img/sharp-win32-x64 0.35.5 |

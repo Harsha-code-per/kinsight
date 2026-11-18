@@ -55,3 +55,20 @@ Start the API with the normal local demo settings, `KINSIGHT_DEMO=1`, `KINSIGHT_
 4. Send revision 2 as a correction. Person A sees a pending state until the counsellor approves revision 2.
 
 Use a fresh local database for the browser test. The sandbox routes are off by default. Writes use the existing demo-operator role. The intake accepts two fixed synthetic participants, two fictional condition identifiers, and a narrow report shape. Approvals and revisions persist in the database. No patient upload form is part of this workflow.
+
+## Compare existing lab reports
+
+The public `/report-compare` page accepts text-based PDFs, TSV and TXT files through a picker or drag and drop. It reads files locally. Structured text files and the verified Labcorp negative SMA and Fragile X carrier-screen summaries can supply suggested findings. The participant checks the imported rows against the original before comparing. Other PDF layouts show a text preview for manual entry. PDF reading order can differ from the visual table and image-only sections can be missing. Use only the findings and avoid copying identifiers. The supported columns are gene, condition, reported result, and optional details such as assay coverage, a variant, a copy count, or a repeat count. Scans, photos, and locked PDFs need manual entry. The page accepts up to 1,000 findings per report and preserves multiple findings for a gene and condition. [Labcorp examples](https://www.labcorp.com/womens-health/providers/resources/sample-reports)
+
+This tool aligns explicitly entered rows by the same gene set and condition label. It distinguishes a missing entry from a reported finding and leaves the labs’ wording intact. The chart filters the entered rows by which report contains them. The guided questions explain exact report terms, differences in panel coverage, and questions to bring to a counsellor. The downloaded public index provides local MedlinePlus links. The comparison supplies no independent patient result or reproductive risk estimate. [ACMG carrier screening practice resource](https://pmc.ncbi.nlm.nih.gov/articles/PMC8488021/) · [MedlinePlus result terminology](https://medlineplus.gov/genetics/understanding/testing/interpretingresults/) · [Data source inventory](../DATA_SOURCES.md)
+
+Run `python scripts/update_report_references.py` from the repository root to refresh the public gene and condition link index. It downloads the source catalogue and writes URL slugs only. The comparison operates in memory and does not send report files or text to the API. A browser test covers PDF reading, preserved findings, validation, and clearing inputs. Authenticated clinical intake, lab-specific document validation, patient identity checks, and audited clinical review remain required for a hosted clinical workflow.
+
+## Remaining integration work
+
+| Order | Scope | Acceptance check |
+| --- | --- | --- |
+| 1 | Report intake and explanation. Local attachment, verified text import, two bounded PDF summaries, and the comparison guide are implemented. Photo OCR and additional lab layouts remain open. | Each additional layout has public or approved fixtures and tests showing that ambiguous sections, partner identity, and lab wording survive review. [Issue 31](https://github.com/loktrishal-05/kinsight/issues/31) |
+| 2 | Seed a hosted synthetic FHIR source and connect EHR import. | Each signed-in sandbox account resolves only its assigned report and refreshes on a corrected resource. [Issues 32](https://github.com/loktrishal-05/kinsight/issues/32) · [28](https://github.com/loktrishal-05/kinsight/issues/28) |
+| 3 | Add the external lab-feed and tracker path. | An authenticated lab event updates the tracker and a corrected result returns to counsellor review. [Issue 30](https://github.com/loktrishal-05/kinsight/issues/30) |
+| 4 | Complete the wider evaluator backlog and clinical pilot gates. | Verify the remaining feedback items against the hosted build and record clinical sign-off separately. [Issue 65](https://github.com/loktrishal-05/kinsight/issues/65) |

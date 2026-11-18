@@ -36,6 +36,7 @@ export default function Landing() {
 
         <section id="features" aria-labelledby="features-title" className="mx-auto max-w-5xl px-5 pb-24 sm:px-8">
           <h2 id="features-title" className="font-display text-[clamp(1.6rem,3.4vw,2.6rem)] font-bold leading-tight tracking-[-0.03em]">{t("landing.f.title")}</h2>
+          <Link href="/report-compare" className="btn-quiet mt-4">{t("reportCompare.title")}</Link>
           <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {["f1", "f2", "f3", "f4", "f5", "f6"].map((k) => (
               <li key={k} className="card">
