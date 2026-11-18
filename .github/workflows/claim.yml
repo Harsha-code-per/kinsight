@@ -1,0 +1,65 @@
+# Issue claiming, so two people never build the same thing.
+# Comment "/claim" on an issue to take it, "/unclaim" to give it back. Assigning someone by hand works too.
+# Every claim and release is posted on the tracking issue (#65); subscribe to it to see who is working on what.
+name: claim
+
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [assigned, unassigned]
+
+permissions:
+  issues: write
+
+concurrency:
+  group: claim-${{ github.event.issue.number }}
+
+jobs:
+  claim:
+    if: ${{ !github.event.issue.pull_request && github.event.issue.number != 65 }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const EPIC = 65, LABEL = "status: in progress";
+            const { owner, repo } = context.repo;
+            const issue = context.payload.issue, n = issue.number;
+            const comment = (num, body) => github.rest.issues.createComment({ owner, repo, issue_number: num, body });
+            const ref = `#${n} ${issue.title}`;
+
+            // Labels and announces the current state. Assignments made by this workflow's token do not
+            // trigger a new run, so the comment path calls this directly.
+            async function announce(assignees, who, claimed) {
+              if (claimed) {
+                await github.rest.issues.addLabels({ owner, repo, issue_number: n, labels: [LABEL] });
+                await comment(EPIC, `🔨 **${who}** started ${ref}`);
+              } else if (assignees.length === 0) {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: n, name: LABEL }).catch(() => {});
+                await comment(EPIC, `↩️ ${ref} is free again (released by ${who})`);
+              }
+            }
+
+            if (context.eventName === "issues") {
+              const who = context.payload.assignee.login;
+              return announce(issue.assignees, who, context.payload.action === "assigned");
+            }
+
+            const me = context.payload.comment.user.login;
+            const cmd = context.payload.comment.body.trim().split(/\s+/)[0].toLowerCase();
+            const current = issue.assignees.map((a) => a.login);
+
+            if (cmd === "/claim") {
+              const others = current.filter((l) => l !== me);
+              if (others.length) return comment(n, `This is already being worked on by ${others.join(", ")}. Please pick another issue, or agree a split here first.`);
+              if (current.includes(me)) return;
+              const { data } = await github.rest.issues.addAssignees({ owner, repo, issue_number: n, assignees: [me] });
+              if (!data.assignees.some((a) => a.login === me)) return comment(n, `Could not assign ${me}: only repository collaborators can be assigned. Ask the owner to add you.`);
+              return announce(data.assignees, me, true);
+            }
+
+            if (cmd === "/unclaim" && current.includes(me)) {
+              const { data } = await github.rest.issues.removeAssignees({ owner, repo, issue_number: n, assignees: [me] });
+              return announce(data.assignees, me, false);
+            }
