@@ -4,7 +4,6 @@ import { expect, test } from "@playwright/test";
 test("sign in -> own result from the real API -> journey and clinic screens", async ({ page }) => {
   await page.goto("/signin");
   await page.waitForLoadState("networkidle");
-  await page.getByTestId("demo-account").click();
   await page.getByTestId("signin-submit").click();
   await expect(page).toHaveURL(/\/home$/);
   await page.getByRole("button", { name: /Person A/ }).click();

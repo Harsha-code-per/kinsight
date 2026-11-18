@@ -6,9 +6,9 @@ what is built, what is not, and what must be decided. Sizes and orders are rough
 
 ## 1. Summary
 
-KinSight is **complete as a demonstration** and **not ready for real people**. Everything that code alone can do is built and
-tested. What remains needs people, approvals and partnerships: evidence that readers understand the explanations, expert review of
-the content and the formulas, real identity and data connections, security and legal sign-off, and named clinical accountability.
+KinSight supports a fictional demonstration. A supervised pilot also needs real identity and lab connections, evidence that readers
+understand the explanations, expert review of content and formulas, security and legal sign-off, and named clinical accountability.
+The engineering sequence and acceptance criteria are in the [real-data rollout](REAL_DATA_ROLLOUT.md).
 
 | Question | Answer today |
 |---|---|
@@ -64,7 +64,7 @@ M = weeks, L = months, mostly waiting on people or approval.
   are regenerated and approved, and every limitation that no longer applies is removed from `docs/limitations.md`.
 
 ### D. Identity, access and security (size M to L)
-- **Missing:** real sign-in (today any username and password works), identity from the service's own provider, multi-factor for
+- **Missing:** real sign-in, identity from the service's own provider, multi-factor for
   counsellors, session policy, secrets management, rate limiting, an external anchor for the audit chain's head hash (the code
   supports it; it is not provisioned), a penetration test and a security review.
 - **Gap in CI:** dependency audit is report-only (`pip-audit || true`) and there is no JavaScript audit; both should block on
@@ -90,8 +90,7 @@ M = weeks, L = months, mostly waiting on people or approval.
 - **Missing:** a data-protection impact assessment, legal review of the consent text and retention/deletion rules, in-region
   hosting, a data-processing arrangement with the host, and an approved model endpoint if any model is ever used (the pipeline
   needs none: explanations come from approved templates).
-- **Licence:** no licence file exists and the repository is public, so the default is all rights reserved. Choose one deliberately
-  (see section 5) and complete a licence inventory of dependencies before any distribution.
+- **Licence:** the repository is MIT-licensed and tracks its dependency inventory in [LICENSES.md](LICENSES.md).
 - **Done when:** the assessment is approved by the host's data-protection officer and hosting is in the permitted region.
 
 ### H. Kin assistant hardening (size S to M)
@@ -113,7 +112,7 @@ M = weeks, L = months, mostly waiting on people or approval.
 | Gate | Contents | Pass criteria |
 |---|---|---|
 | **0. Demo (now)** | All code built and tested; honest limits published | Met |
-| **1. Evidence and review** | Workstreams A, B, C for the pilot languages; licence chosen | Study report in hand; reviewers recorded; genetics review recorded |
+| **1. Evidence and review** | Workstreams A, B, C for the pilot languages | Study report in hand; reviewers recorded; genetics review recorded |
 | **2. Secure build** | D, E, G, H, I in a staging environment with the host's systems | Penetration test clean; test feed correct; DPIA approved |
 | **3. Supervised pilot** | One service, counsellors review **every** result before release (no tier shortcuts), limited volume | Safety case signed (F); incident process live; stop criteria below agreed in advance |
 | **4. Decision** | Review pilot measures | Understanding gap within target; time to counsellor contact improved; zero privacy incidents |
@@ -132,9 +131,8 @@ success measure.
 2. **Which languages first?** Recommend English plus one or two, so review and study effort is not spread across seven.
 3. **Who are the reviewers?** A clinical geneticist and, per language, a native-speaking health communicator. Names go in `docs/REVIEWS.md`.
 4. **Which ethics body will approve the volunteer study,** and can it run before any translation work is finished?
-5. **Which licence?** Options include a permissive licence, a copyleft licence, or all rights reserved with a separate pilot agreement.
-6. **Who is the accountable clinician,** and who is the data-protection officer for the host?
-7. **Hosting:** which in-region provider, and whether any model endpoint will ever be used.
+5. **Who is the accountable clinician,** and who is the data-protection officer for the host?
+6. **Hosting:** which in-region provider, and whether any model endpoint will ever be used.
 
 ## 6. Non-goals and standing commitments
 

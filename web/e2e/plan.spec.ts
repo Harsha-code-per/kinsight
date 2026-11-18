@@ -2,7 +2,6 @@ import { expect, test } from "@playwright/test";
 
 test("demo care plan: book and cancel, calculate gestation, answer family questions", async ({ page }) => {
   await page.goto("/signin");
-  await page.getByTestId("demo-account").click();
   await page.getByTestId("signin-submit").click();
   await expect(page).toHaveURL(/\/home$/);
   await page.getByRole("button", { name: /Person A/ }).click();
@@ -31,7 +30,6 @@ test("demo care plan: book and cancel, calculate gestation, answer family questi
 
 test("certificate lock links to the understanding check", async ({ page }) => {
   await page.goto("/signin");
-  await page.getByTestId("demo-account").click();
   await page.getByTestId("signin-submit").click();
   await expect(page).toHaveURL(/\/home$/);
   await page.getByRole("button", { name: /Person A/ }).click();

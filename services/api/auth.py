@@ -57,6 +57,8 @@ def issue_token(persona: str) -> str:
 
 
 def verify_token(token: str) -> Identity:
+    if os.environ.get("KINSIGHT_DEMO_AUTH") != "1":
+        raise ValueError("Demo authentication is disabled")
     key = secret("KINSIGHT_TOKEN_SECRET")
     try:
         if len(token) > 2048:

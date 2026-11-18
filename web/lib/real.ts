@@ -92,9 +92,10 @@ export const real = {
   explanation: async () => json("/api/me/results/current/explanation"),
   async couple(): Promise<Couple> {
     const r = await raw(`/api/couples/${COUPLE}/assessment`, {}, partnerToken);
-    if (!r.ok) return { tier: null, awaiting_counsellor: false, findings: null };
+    if (r.status === 403) return { tier: null, awaiting_counsellor: false, findings: null };
+    if (!r.ok) throw new Error(String(r.status));
     const d = await r.json();
-    return { tier: d.tier, awaiting_counsellor: false, findings: (d.findings ?? []).map((f: any) => ({ ...f, label: f.condition_id })) };
+    return { tier: d.tier, awaiting_counsellor: false, findings: d.findings?.map((f: any) => ({ ...f, ...conditionLabels(f.condition_id) })) ?? null };
   },
   async grantPooling() {
     await grant(other(), "couple", COUPLE, "couple_pooling", ["tier"], "couple_planning");

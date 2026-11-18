@@ -39,22 +39,24 @@ KinSight's own code and wording are [MIT](../LICENSE). Licenses below are each p
 
 | License | Count | Packages |
 | --- | --- | --- |
-| MIT | 18 | @next/env 14.2.35, @next/swc-win32-x64-msvc 14.2.33, @tanstack/query-core 5.59.0, @tanstack/react-query 5.59.0, busboy 1.6.0, client-only 0.0.1, js-tokens 4.0.0, loose-envify 1.4.0, nanoid 3.3.20, next 14.2.35, postcss 8.4.31, react 18.3.1, react-dom 18.3.1, scheduler 0.23.2, streamsearch 1.1.0, styled-jsx 5.1.1, three 0.169.0, zod 3.23.8 |
+| MIT | 15 | @img/colour 1.1.0, @next/env 16.4.6, @next/swc-win32-x64-msvc 16.4.6, @tanstack/query-core 5.59.0, @tanstack/react-query 5.59.0, client-only 0.0.1, nanoid 3.3.20, next 16.4.6, postcss 8.5.23, react 19.2.9, react-dom 19.2.9, scheduler 0.27.0, styled-jsx 5.1.6, three 0.169.0, zod 4.6.7 |
 | OFL-1.1 | 9 | @fontsource-variable/bricolage-grotesque 5.3.0, @fontsource-variable/noto-sans-arabic 5.3.0, @fontsource-variable/noto-sans-devanagari 5.3.0, @fontsource-variable/noto-sans-kannada 5.3.0, @fontsource-variable/noto-sans-malayalam 5.3.0, @fontsource-variable/noto-sans-tamil 5.3.0, @fontsource-variable/noto-sans-telugu 5.3.0, @fontsource-variable/plus-jakarta-sans 5.3.0, @fontsource/reem-kufi 5.3.0 |
-| Apache-2.0 | 5 | @playwright/test 1.48.2, @swc/counter 0.1.3, @swc/helpers 0.5.5, playwright 1.48.2, playwright-core 1.48.2 |
-| ISC | 3 | graceful-fs 4.2.11, lucide-react 0.453.0, picocolors 1.1.1 |
-| 0BSD | 1 | tslib 2.8.1 |
+| Apache-2.0 | 7 | @playwright/test 1.65.1, @swc/helpers 0.5.23, baseline-browser-mapping 2.11.32, detect-libc 2.1.2, playwright 1.65.1, playwright-core 1.65.1, sharp 0.35.5 |
+| ISC | 3 | lucide-react 0.453.0, picocolors 1.1.1, semver 7.8.6 |
+| 0BSD | 1 | tslib 2.9.1 |
+| Apache-2.0 AND LGPL-3.0-or-later **(copyleft)** | 1 | @img/sharp-win32-x64 0.35.5 |
 | BSD-3-Clause | 1 | source-map-js 1.2.2 |
 | CC-BY-4.0 | 1 | caniuse-lite 1.0.30001819 |
 
 ## Findings
 
-- No strong-copyleft (GPL/AGPL) and no unknown licenses. Weak-copyleft packages, each reviewed:
+- The installed inventories contain weak-copyleft packages. Python packages reviewed:
   - **certifi 2026.10.23** (MPL-2.0): MPL-2.0 is file-level copyleft. Used unmodified as installed from PyPI (CA bundle); no obligation beyond keeping the notice.
   - **orjson 3.13.0** (MPL-2.0 AND (Apache-2.0 OR MIT)): MPL-2.0 (with Apache-2.0 / MIT) is file-level copyleft. Used unmodified as a compiled wheel; not vendored or patched.
   - **psycopg 3.3.8** (LGPL-3.0-only): LGPL-3.0 permits use as a library from a differently licensed program. Installed unmodified from PyPI, dynamically imported, replaceable by the user (pip install), so the LGPL linking conditions are met. No LGPL code is copied into this repository.
   - **psycopg-binary 3.3.8** (LGPL-3.0-only): Same as psycopg: the prebuilt libpq wheel, unmodified and replaceable. If the Docker image is ever redistributed, ship the LGPL text and offer the source of this package.
   - **hypothesis 6.168.5** (MPL-2.0): MPL-2.0, dev and test only. Not installed in the API image and not shipped.
+- Next.js installs system-specific sharp and libvips binaries as optional dependencies. The Windows package declares Apache-2.0 and LGPL-3.0-or-later. Check notices and source obligations for the target platform before redistributing a container image. [Sharp installation and prebuilt binaries](https://sharp.pixelplumbing.com/install/)
 - Attribution: `caniuse-lite` is CC-BY-4.0 (browser-support data used by the build toolchain); keep this notice.
 - Fonts (`@fontsource*`) are SIL OFL-1.1; the fonts are bundled unmodified.
 - Out of scope here: the ClinVar and gnomAD data terms and the licensed questionnaires (see `DATA_SOURCES.md`).

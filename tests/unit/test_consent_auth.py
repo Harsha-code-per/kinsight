@@ -25,3 +25,12 @@ def test_demo_auth_disabled_by_default(monkeypatch):
     monkeypatch.delenv("KINSIGHT_DEMO_AUTH", raising=False)
     with pytest.raises(PermissionError):
         issue_token("person_a")
+
+
+def test_disabling_demo_auth_rejects_issued_tokens(monkeypatch):
+    monkeypatch.setenv("KINSIGHT_DEMO_AUTH", "1")
+    monkeypatch.setenv("KINSIGHT_TOKEN_SECRET", "synthetic-only-test-secret-32-bytes")
+    token = issue_token("person_a")
+    monkeypatch.delenv("KINSIGHT_DEMO_AUTH")
+    with pytest.raises(ValueError, match="disabled"):
+        verify_token(token)

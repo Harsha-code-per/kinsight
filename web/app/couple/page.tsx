@@ -4,7 +4,7 @@ import { Users } from "lucide-react";
 import { Notice, PageHeader, Steps } from "@/components/ui";
 import { IconArray, Punnett, TierChip } from "@/components/visuals";
 import { ReadAloud } from "@/components/Voice";
-import { api } from "@/lib/api";
+import { api, MOCK } from "@/lib/api";
 import { rowLabel } from "@/lib/fixtures";
 import { useI18n } from "@/lib/i18n";
 
@@ -14,7 +14,7 @@ export default function CoupleView() {
   const couple = useQuery({ queryKey: ["couple"], queryFn: () => api.couple() });
   const expl = useQuery({ queryKey: ["expl", lang, level], queryFn: () => api.explanation(lang, level) });
   const grant = useMutation({ mutationFn: api.grantPooling, onSuccess: () => qc.invalidateQueries() });
-  const c = couple.data;
+  const c = couple.isSuccess ? couple.data : undefined;
   const released = !!c?.tier && !c.awaiting_counsellor;
   const step = !c?.tier ? 0 : c.awaiting_counsellor ? 1 : 2;
   const pct = (x: number) => (x === 0 ? "0%" : x < 0.01 ? t("viz.lessThanOnePct") : `${Math.round(x * 100)}%`);
@@ -22,14 +22,16 @@ export default function CoupleView() {
     <section className="space-y-6">
       <PageHeader title={t("couple.title")} lead={t("couple.lead")} action={c?.tier ? <TierChip tier={c.tier} /> : undefined} />
       <div data-demo="steps"><Steps labels={[t("couple.s1"), t("couple.s2"), t("couple.s3")]} current={step} /></div>
-      {!c?.tier && (
+      {couple.isPending && <p role="status">{t("loading")}</p>}
+      {couple.isError && <p role="alert">{t("couple.loadError")}</p>}
+      {c && !c.tier && (
         <div className="card flex flex-wrap items-center justify-between gap-4">
-          <p className="max-w-read">{t("couple.waiting")}</p>
+          <p className="max-w-read">{t(MOCK ? "couple.waiting" : "couple.unavailable")}</p>
           <button className="btn" data-demo="share" onClick={() => grant.mutate()}><Users aria-hidden className="h-4 w-4" />{t("couple.pooling")}</button>
         </div>
       )}
       {c?.awaiting_counsellor && <Notice>{t("couple.tier3")}</Notice>}
-      {released && !c?.findings?.length && <Notice>{t("couple.noFindings")}</Notice>}
+      {released && c?.findings?.length === 0 && <Notice>{t("couple.noFindings")}</Notice>}
       {c?.findings?.map((f) => (
         <article key={f.condition_id} data-demo="finding" className="card grid gap-6 md:grid-cols-[minmax(0,1fr)_auto]">
           <div className="space-y-3">

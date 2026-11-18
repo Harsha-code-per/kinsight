@@ -1,0 +1,44 @@
+# KinSight real-data rollout
+
+## Decision
+
+The evaluator’s concern is whether two people can sign in independently and see their own current screening results. KinSight currently has fictional personas, hard-coded case and couple aliases in the API client, and an API that labels its results synthetic. `NEXT_PUBLIC_MOCK=0` changes the transport to HTTP. A learning model cannot establish identity, retrieve a lab report, or determine which revision a clinician approved.
+
+Start with one clinic, one lab, one supported panel and one reviewed language. The first pilot should display clinician-released reports and a clinician-reviewed couple summary after both partners consent. Treat missing coverage, ambiguous findings and an unavailable partner report as distinct states. ACMG and ACOG describe residual risk after a screen with no detected finding. Preserve that distinction and avoid producing a numerical estimate unless the clinical team validates the panel, inputs and calculation for the intended use. [ACMG carrier-screening practice resource](https://www.nature.com/articles/s41436-021-01203-z) · [ACOG carrier screening](https://www.acog.org/clinical/clinical-guidance/committee-opinion/articles/2017/03/carrier-screening-in-the-age-of-genomic-medicine)
+
+## Findings and order of work
+
+| Priority | Evidence in this repository | Work |
+| --- | --- | --- |
+| P0 | `/signin` accepted arbitrary credentials. Demo token issuance had an enable flag, while token verification did not. | Replace the credential form with explicit demo entry and reject existing demo tokens when the flag is off. |
+| P0 | The client uses `demo-case`, `demo-couple` and a second fictional persona token. The API schema requires synthetic results. | Build pilot authentication and account-scoped APIs. Map the validated issuer and subject to the clinic’s patient identifier. Use server-side membership for case lookup and check both partners’ consent per shared read. [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html#ClaimStability) · [OAuth security best current practice](https://www.rfc-editor.org/rfc/rfc9700.html) |
+| P0 | The lab tracker simulates progress and `services/agents/fhir.py` exports synthetic referral status. There is no inbound report connector. | Agree on test report examples and a provider contract. Map report identity, subject, findings, timestamps and correction or withdrawal states. Use HL7 FHIR R4 Genomics Reporting if the lab supports it. [HL7 Genomics Reporting](https://hl7.org/fhir/uv/genomics-reporting/general.html) |
+| P0 | The API client rendered failed couple-assessment responses as waiting for consent. | Fixed the transport distinction and preserved redacted findings. The existing API keeps a generic access denial as a privacy boundary. Add explicit report and consent states for verified pilot members. |
+| P0 | Demo output and rule files use a fictional panel and assumptions. | Start with a clinician release decision per report revision and per couple summary. Revoke stale release on correction or withdrawal. Keep the demo arithmetic out of pilot assessments until independently validated. |
+| P0 | The web dependency audit flagged critical Next.js advisories and vulnerable Zod, PostCSS and Playwright versions. | Upgraded the dependencies in the working tree. The production audit reports zero vulnerabilities after the upgrade. Keep dependency review and browser checks in the pilot release process. [Next.js advisory](https://github.com/advisories/GHSA-2464-fhr4-w9xw) · [Web licence inventory](LICENSES.md) |
+| P1 | Public ClinVar and gnomAD lookup is reference enrichment. | Use approved, versioned references only when the clinical workflow requires them. ClinVar aggregates submissions and can represent conflicting classifications. It supplies no evidence that an individual was tested. [NCBI ClinVar classifications](https://www.ncbi.nlm.nih.gov/clinvar/docs/clinsig/) |
+| P1 | The volunteer study tooling exists. Clinical and language review are pending. | Agree on intended use, jurisdiction, permitted data flows, retention and a named clinical owner. Run comprehension and safety reviews with the host before release. [WHO human genome data governance](https://www.who.int/publications/i/item/9789240102149) · [Existing pilot readiness checklist](PILOT_READINESS.md) |
+
+## Schedule and acceptance gates
+
+The first row is complete in this working tree. The remaining windows are engineering estimates. The staging clock starts when the host supplies test credentials, a sandbox feed and approved report examples. Approval and partner lead time are outside the estimates.
+
+| Window | Deliverable | Acceptance |
+| --- | --- | --- |
+| Start here | Demo boundary fixes and synthetic report-revision contract. | Demo entry collects no credentials. Disabling demo authentication stops issued demo tokens. Synthetic pending, approved, amended and withdrawn revisions are exercised. |
+| Staging week 1 | Clinic identity, account-to-patient mapping and provider-specific report mapping. | Two partner accounts and an unrelated account authenticate independently. Unknown and mismatched patient references fail closed. |
+| Staging week 2 | Persist and reconcile lab reports. Wire the personal result view to the latest clinician-released revision and display source and update time. | Pending, missing, partial, corrected, withdrawn, duplicate and out-of-order inputs work end to end. Never show the older approved result after a newer revision arrives. Track source delay and show freshness or unavailability. Start with refresh on open and explicit refresh. Add push or polling when the lab agrees on update latency. |
+| Staging week 3 | Pairing, separate partner consent, clinician-reviewed couple summary and audit. | Either partner can revoke immediately. An unrelated account cannot read the case. Corrections invalidate the couple summary and alert its reviewer. Staging demonstrates both accounts seeing a corrected release. |
+| Pilot gate | Clinic acceptance, privacy and jurisdiction review, security and recovery checks, reviewed wording and supervised release. | Host signs off. Run a correction drill, test access and retention controls, validate result fidelity against the lab, and agree on response times and stop criteria. |
+
+## Training decision
+
+No model is required for the first pilot. Use the lab’s structured interpretations and clinician-approved wording. A later model experiment needs a concrete task, such as drafting explanations from approved facts, and a measured improvement over templates. Evaluate factual fidelity, omissions, unsupported claims, escalation and comprehension by language on a held-out clinician-reviewed set. Use public or synthetic examples for Colab or Kaggle experiments. Keep identifiable lab reports in the host’s approved environment.
+
+## Run the first integration check
+
+From the repository root, run `python -m pytest -q tests/integration/test_pilot_reports.py tests/unit/test_consent_auth.py`. The report contract in `services/api/pilot_reports.py` is an executable synthetic integration slice. It models one report stream, assumes the source supplies a monotonic revision, and matches approval to the latest subject, report and revision. Production source ordering, persistence, release authorization and web integration depend on the agreed host contract.
+
+`from_synthetic_fhir` accepts a synthetic-tagged `DiagnosticReport` with the expected relative patient reference, report status and issued timestamp. The caller supplies a numeric revision from the feed contract and separately mapped lab interpretations. Select the revision from the ordered source feed because FHIR `meta.versionId` can be opaque. The mapping is exercised with final and corrected reports. Public HL7 examples are useful for structural checks and Synthea can supply broader synthetic encounter scenarios. [FHIR R4 DiagnosticReport](https://hl7.org/fhir/R4/diagnosticreport.html) · [FHIR resource metadata](https://hl7.org/fhir/R4/resource.html#Meta) · [Synthea](https://synthetichealth.github.io/synthea/)
+
+The live ClinVar and gnomAD adapters returned data for the public demo variant IDs on 2026-11-18. Their upstream error envelopes now fail as unavailable instead of producing an empty lookup. The [data source inventory](../DATA_SOURCES.md) documents their role and provenance.

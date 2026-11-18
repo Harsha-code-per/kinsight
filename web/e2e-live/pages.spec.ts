@@ -1,10 +1,22 @@
 import { expect, test } from "@playwright/test";
 
+test("couple summary distinguishes an outage from an access denial", async ({ page }) => {
+  let status = 503;
+  await page.route("**/api/couples/*/assessment", (route) => route.fulfill({ status }));
+  await page.goto("/couple");
+  await expect(page.getByRole("alert").filter({ hasText: "The couple summary could not load" })).toBeVisible();
+  await expect(page.getByText("The shared summary is currently unavailable.")).toHaveCount(0);
+
+  status = 403;
+  await page.reload();
+  await expect(page.getByText("The shared summary is currently unavailable.")).toBeVisible();
+  await expect(page.getByText("The couple summary could not load", { exact: false })).toHaveCount(0);
+});
+
 // Real-API content checks for the screens that used to look empty or garbled.
 async function signInAs(page: import("@playwright/test").Page, role: RegExp) {
   await page.goto("/signin");
   await page.waitForLoadState("networkidle");
-  await page.getByTestId("demo-account").click();
   await page.getByTestId("signin-submit").click();
   await expect(page).toHaveURL(/\/home$/);
   await page.getByRole("button", { name: role }).click();

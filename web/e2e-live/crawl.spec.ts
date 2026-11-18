@@ -17,7 +17,7 @@ test("crawl every screen as every role", async ({ page }) => {
     if (u.includes("/api/") && r.status() >= 500) problems.push(`${where}: ${r.status()} ${u.replace(/^.*\/api/, "/api")}`);
   });
   await page.goto("/signin"); await page.waitForLoadState("networkidle");
-  await page.getByTestId("demo-account").click(); await page.getByTestId("signin-submit").click();
+  await page.getByTestId("signin-submit").click();
   await expect(page).toHaveURL(/\/home$/);
   for (const role of ROLES) {
     await page.goto("/home"); await page.waitForLoadState("networkidle");

@@ -43,9 +43,12 @@ def fetch(ids: list[str], *, opener=urllib.request.urlopen, now=time.time) -> di
             params["api_key"] = os.environ["NCBI_API_KEY"]
         try:
             with opener(URL + "?" + urllib.parse.urlencode(params), timeout=10) as r:
-                result = json.load(r)["result"]
-        except (urllib.error.URLError, TimeoutError, KeyError, ValueError):
-            raise SourceUnavailable("ClinVar is not reachable") from None
+                data = json.load(r)
+            result = data["result"]
+            if data.get("error") or not isinstance(result, dict) or result.get("error"):
+                raise SourceUnavailable("ClinVar returned an error")
+        except (urllib.error.URLError, TimeoutError, KeyError, ValueError, TypeError):
+            raise SourceUnavailable("ClinVar did not return a usable response") from None
         for i in missing:
             g = (result.get(i) or {}).get("germline_classification") or {}
             fresh[i] = {"acmg_class": _class_of(g.get("description", "")), "label": g.get("description", ""),

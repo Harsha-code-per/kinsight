@@ -59,10 +59,10 @@ def fetch(ids: list[str], *, opener=urllib.request.urlopen, now=time.time) -> di
         try:
             with opener(req, timeout=15) as r:
                 data = json.load(r)
-        except (urllib.error.URLError, TimeoutError, ValueError):
-            raise SourceUnavailable("gnomAD is not reachable") from None
-        if "data" not in data:
-            raise SourceUnavailable("gnomAD returned an error")
-        out[i] = summarise((data["data"] or {}).get("variant"))
+            if data.get("errors"):
+                raise SourceUnavailable("gnomAD returned an error")
+            out[i] = summarise(data["data"]["variant"])
+        except (urllib.error.URLError, TimeoutError, ValueError, AttributeError, KeyError, TypeError):
+            raise SourceUnavailable("gnomAD did not return a usable response") from None
         _cache[i] = (now(), out[i])
     return out

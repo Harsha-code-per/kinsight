@@ -8,7 +8,6 @@ test("slow sign-in shows the waking notice and then clears it", async ({ page })
   });
   await page.goto("/signin");
   await page.waitForLoadState("networkidle");
-  await page.getByTestId("demo-account").click();
   await page.getByTestId("signin-submit").click();
   await expect(page).toHaveURL(/\/home$/);
   await page.getByRole("button", { name: /Person A/ }).click();

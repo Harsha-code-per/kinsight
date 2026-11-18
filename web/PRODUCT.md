@@ -22,7 +22,7 @@ Every number comes from a deterministic genetics engine and verified templates (
 Premarital screening programmes in the Gulf; a shortage of genetic counsellors; family honour and privacy fears; extended relatives rarely told. Demo runs in mock mode with fictional people and a guided 42-step auto-demo.
 
 ## Capabilities and Constraints
-- Next.js 14 app (`repo/web`), Tailwind, CSS-variable tokens, light/dark/high-contrast, Arabic RTL, two reading levels, read-aloud.
+- Next.js 16 app (`repo/web`), Tailwind, CSS-variable tokens, light/dark/high-contrast, Arabic RTL, two reading levels, read-aloud.
 - Landing page (`app/page.tsx`) must keep: `data-demo` targets (hero, how, cases, personas), `data-testid="demo-start"`, the scenario picker and persona picker, and all i18n text in `messages/*.json`.
 - Current redesign scope: landing page only; app screens keep their look. Hero 3D must be real-time in code (no generated video).
 

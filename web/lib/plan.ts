@@ -10,7 +10,7 @@ export const GestationS = z.object({ days: z.number().int().min(0).max(300), wee
 export const MonthsS = z.number().int().nonnegative();
 export const ReengagementS = z.object({ due_month: z.union([z.literal(6), z.literal(12)]).nullable() });
 export const MmicRequestS = z.object({ knowledge_correct: z.number().int().nonnegative(), knowledge_total: z.number().int().min(1), attitude: z.enum(["favourable", "unfavourable"]), acted: z.boolean() }).refine((v) => v.knowledge_correct <= v.knowledge_total, "Correct answers cannot exceed the total");
-export const MmicS = z.object({ informed: z.boolean(), dimension_flags: z.record(z.boolean()) });
+export const MmicS = z.object({ informed: z.boolean(), dimension_flags: z.record(z.string(), z.boolean()) });
 export const GcosRequestS = z.object({ answers: z.array(z.number().int().min(1).max(7)).length(24) });
 export const GcosS = z.object({ total: z.number().int().min(24).max(168) });
 export const RELATIONS = ["none", "second_cousins", "first_cousins_once_removed", "first_cousins", "double_first_cousins", "uncle_niece_or_aunt_nephew"] as const;

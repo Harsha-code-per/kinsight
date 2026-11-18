@@ -23,7 +23,9 @@ export async function liveFrequency(variants: string[]) {
   for (const id of variants) {
     const res = await fetch(URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: QUERY, variables: { id, d: "gnomad_r4" } }) });
     if (!res.ok) throw new Error(String(res.status));
-    out[id] = summarise((await res.json()).data?.variant ?? null);
+    const payload = await res.json();
+    if (payload?.errors?.length || payload?.data?.variant === undefined) throw new Error("503");
+    out[id] = summarise(payload.data.variant);
   }
   return { variants: out };
 }

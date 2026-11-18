@@ -178,6 +178,8 @@ def test_clinvar_parse_cache_and_errors():
     clinvar._cache.clear()
     with pytest.raises(clinvar.SourceUnavailable):
         clinvar.fetch(["9"], opener=down)
+    with pytest.raises(clinvar.SourceUnavailable):
+        clinvar.fetch(["9"], opener=lambda url, timeout: io.StringIO('{"result":{"error":"unavailable"}}'))
 
 
 def test_gnomad_summary_validation_cache_and_errors():
@@ -213,5 +215,6 @@ def test_gnomad_summary_validation_cache_and_errors():
     gnomad._cache.clear()
     with pytest.raises(gnomad.SourceUnavailable):
         gnomad.fetch(["1-1-A-C"], opener=down)
-    gnomad._cache.clear()
+    with pytest.raises(gnomad.SourceUnavailable):
+        gnomad.fetch(["1-1-A-C"], opener=lambda r, timeout: io.StringIO('{"data":{"variant":null},"errors":[{}]}'))
     assert gnomad.fetch(["1-1-A-C"], opener=lambda r, timeout: io.StringIO('{"data":{"variant":null}}')) == {"1-1-A-C": None}

@@ -2,7 +2,6 @@ import { expect, test } from "@playwright/test";
 
 test("check-in, both vault PINs, clinic triage and emergency access", async ({ page }) => {
   await page.goto("/signin");
-  await page.getByTestId("demo-account").click();
   await page.getByTestId("signin-submit").click();
   await expect(page).toHaveURL(/\/home$/);
   await page.getByRole("button", { name: /Person A/ }).click();
@@ -48,7 +47,6 @@ test("check-in, both vault PINs, clinic triage and emergency access", async ({ p
 
 test("roles outside care and clinic see restricted notices", async ({ page }) => {
   await page.goto("/signin");
-  await page.getByTestId("demo-account").click();
   await page.getByTestId("signin-submit").click();
   await expect(page).toHaveURL(/\/home$/);
   await page.getByRole("button", { name: /Person A/ }).click();

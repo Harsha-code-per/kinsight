@@ -1,38 +1,18 @@
 "use client";
-// Demo sign-in: a cinematic background video beside a light form. Any non-empty username and password signs in (fictional demo,
-// no real accounts); "Use the demo account" fills them in. The video lives at public/media/signin.mp4; until it exists, or under
-// reduced motion, a still daylight lattice stands in. The clip plays forward then reversed (encoded that way) so the loop has no seam.
-import { ArrowLeft, ArrowRight, Eye, EyeOff, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { Brand, LangSwitch } from "@/components/PublicChrome";
 import { useI18n } from "@/lib/i18n";
 
-const DEMO = { user: "demo.user", pass: "kinsight-demo" };
-
 export default function SignIn() {
   const { t } = useI18n();
-  const router = useRouter();
-  const [user, setUser] = useState("");
-  const [pass, setPass] = useState("");
-  const [show, setShow] = useState(false);
-  const [error, setError] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [video, setVideo] = useState(false);
 
   useEffect(() => {
+    try { localStorage.removeItem("ks_user"); } catch { /* private mode */ }
     setVideo(!matchMedia("(prefers-reduced-motion: reduce)").matches && document.documentElement.dataset.motion !== "reduce");
   }, []);
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!user.trim() || !pass) { setError(true); return; }
-    setError(false);
-    setBusy(true);
-    try { localStorage.setItem("ks_user", user.trim()); } catch { /* private mode */ }
-    router.push("/home");
-  };
 
   return (
     <div className="theme-light relative min-h-[100svh] overflow-hidden bg-canvas text-ink">
@@ -71,39 +51,11 @@ export default function SignIn() {
             <h1 id="signin-title" className="font-display text-[2.4rem] font-bold leading-none tracking-[-0.035em]">{t("signin.title")}</h1>
             <p className="mt-3 text-sm text-ink/70">{t("signin.lead")}</p>
 
-            <button type="button" data-testid="demo-account" onClick={() => { setUser(DEMO.user); setPass(DEMO.pass); setError(false); }}
-              className="mt-6 flex w-full items-center gap-3 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-start transition hover:border-brand-500">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-600 text-onbrand"><UserRound aria-hidden className="h-4 w-4" /></span>
-              <span>
-                <span className="block text-sm font-bold text-brand-800">{t("signin.demo")}</span>
-                <span className="block text-xs text-ink/65">{t("signin.demoHint")}</span>
-              </span>
-            </button>
-
-            <form onSubmit={submit} noValidate className="mt-6 space-y-4">
-              <label className="block text-sm font-semibold">
-                {t("signin.user")}
-                <input className="field mt-1.5 h-11" name="username" autoComplete="username" value={user} onChange={(e) => setUser(e.target.value)}
-                  aria-invalid={error && !user.trim()} />
-              </label>
-              <label className="block text-sm font-semibold">
-                {t("signin.pass")}
-                <span className="relative mt-1.5 block">
-                  <input className="field h-11 pe-11" name="password" type={show ? "text" : "password"} autoComplete="current-password" value={pass}
-                    onChange={(e) => setPass(e.target.value)} aria-invalid={error && !pass} />
-                  <button type="button" onClick={() => setShow(!show)} aria-label={t(show ? "signin.hide" : "signin.show")} aria-pressed={show}
-                    className="absolute inset-y-0 end-0 grid w-11 place-items-center text-ink/60 hover:text-ink">
-                    {show ? <EyeOff aria-hidden className="h-4 w-4" /> : <Eye aria-hidden className="h-4 w-4" />}
-                  </button>
-                </span>
-              </label>
-              {error && <p role="alert" className="text-sm font-medium text-unsure-fg">{t("signin.missing")}</p>}
-              <button type="submit" disabled={busy} data-testid="signin-submit"
-                className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand-600 text-sm font-bold text-onbrand shadow-lift transition hover:bg-brand-700 disabled:opacity-70">
-                {busy ? t("signin.busy") : t("signin.submit")}
-                {!busy && <ArrowRight aria-hidden className="h-4 w-4 transition group-hover:translate-x-0.5 rtl:rotate-180" />}
-              </button>
-            </form>
+            <Link href="/home" data-testid="signin-submit"
+              className="group mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand-600 text-sm font-bold text-onbrand shadow-lift transition hover:bg-brand-700">
+              {t("signin.cta")}
+              <ArrowRight aria-hidden className="h-4 w-4 transition group-hover:translate-x-0.5 rtl:rotate-180" />
+            </Link>
 
             <Link href="/" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">
               <ArrowLeft aria-hidden className="h-4 w-4 rtl:rotate-180" />{t("signin.back")}

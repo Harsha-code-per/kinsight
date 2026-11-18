@@ -17,7 +17,7 @@ export const CoupleS = Fictional.extend({
   awaiting_counsellor: z.boolean().optional(),
   related: z.boolean().optional(),
   findings: z.array(z.object({ condition_id: z.string(), label: z.string().optional(), label_ar: z.string().optional(), risk_affected: z.number().nullable(),
-    note_codes: z.array(z.string()), formula_id: z.string().optional(), inheritance: z.string().optional(), inputs: z.record(z.number()).optional() })).nullish(),
+    note_codes: z.array(z.string()), formula_id: z.string().optional(), inheritance: z.string().optional(), inputs: z.record(z.string(), z.number()).optional() })).nullish(),
 });
 export const ConsentS = Fictional.extend({ id: z.string(), grantee_id: z.string(), scope: z.string(), purpose: z.string(), expires_at: z.number(), revoked_at: z.number().nullable() });
 export const StepS = z.object({ state: z.string(), owner_id: z.string(), due_at: z.number(), overdue: z.boolean().optional() });
@@ -30,7 +30,7 @@ export const PedigreeS = z.object({
   relationships: z.array(RelS), warnings: z.array(z.string()),
 });
 
-export const TrackerS = z.object({ stages: z.array(z.string()).length(8), stage: z.number().int().min(1).max(8), qc_failure: z.string().nullable(), times: z.record(z.number()) });
+export const TrackerS = z.object({ stages: z.array(z.string()).length(8), stage: z.number().int().min(1).max(8), qc_failure: z.string().nullable(), times: z.record(z.string(), z.number()) });
 export const CertificateS = z.object({ days_left: z.number().min(0).max(90), expired: z.boolean(), alert_at: z.union([z.literal(60), z.literal(30), z.literal(14), z.literal(7)]).nullable(), genetic_compatibility: z.literal("permanent"), locked: z.boolean().optional(), locked_reason: z.literal("teach_back").optional() });
 export const PairingS = z.object({ id: z.string(), pin: z.string().regex(/^\d{9}$/), expires_in: z.number().nonnegative() });
 export const PairingStatusS = z.object({ status: z.enum(["pending", "active", "revoked", "expired"]) });

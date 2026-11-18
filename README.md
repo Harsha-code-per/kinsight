@@ -21,7 +21,7 @@ Built for the **Future Health Digital Innovation Challenge, Challenge 03**.
 
 ### 🔗 Try it live: **[kinsight-five.vercel.app](https://kinsight-five.vercel.app)**
 
-<sub>No install and no account. Click **Sign in**, then **Use the demo account**. Switch language from the menu in the top bar (seven languages).</sub>
+<sub>Click **Open the demo** to explore fictional cases. Switch language from the menu in the top bar (seven languages).</sub>
 
 <img src="docs/screenshots/01-landing.jpg" alt="KinSight landing page: a sunlit 3D lattice screen behind the headline" width="100%" />
 
@@ -188,7 +188,7 @@ flowchart TB
     G[Auditors]
   end
 
-  subgraph Web["Web app · Next.js 14 (web/)"]
+  subgraph Web["Web app · Next.js 16 (web/)"]
     L["Public landing<br/>three.js 3D hero"]
     S["Demo sign-in<br/>background film"]
     UI["App screens<br/>result · couple · family · consents · privacy<br/>counsellor · analyst · governance · methods"]
@@ -347,7 +347,7 @@ copilot guard and are tested against the same 109-prompt red-team set.
 
 ```mermaid
 flowchart LR
-  LAND["Landing page<br/>3D lattice → family tree → 100 lights"] --> SIGN["Sign-in<br/>Use the demo account"]
+  LAND["Landing page<br/>3D lattice → family tree → 100 lights"] --> SIGN["Demo entry<br/>Open the demo"]
   SIGN --> HOME["App home<br/>pick a fictional case and a role"]
   HOME --> PA["Person A / B<br/>result · couple · check · next · family · consents · privacy"]
   HOME --> CO["Counsellor<br/>queue · brief · approve · referral"]
@@ -409,7 +409,7 @@ CI runs ruff, pytest, the demo path, a secret scan, TypeScript checks, Vitest, a
 
 | Area | Technology |
 |---|---|
-| Web | Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, TanStack Query, three.js (lazy-loaded WebGL) |
+| Web | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, TanStack Query, three.js (lazy-loaded WebGL) |
 | Type | Bricolage Grotesque, Plus Jakarta Sans, Reem Kufi, Noto Sans (Arabic, Devanagari, Tamil, Telugu, Kannada, Malayalam) |
 | API | FastAPI, Pydantic v2, signed persona tokens |
 | Workflow | LangGraph case graph with durable checkpoints (SQLite locally, Postgres in Compose) |
@@ -482,12 +482,12 @@ kinsight/
 **Online:** the demo is deployed at **[kinsight-five.vercel.app](https://kinsight-five.vercel.app)** (Vercel, `web/` as the root
 directory, demo mode with fictional data, redeployed automatically on every push to `main`). Run it yourself with the steps below.
 
-**Web app only (mock API, fastest):**
+**Web app only, with Node.js 22 and the mock API**
 
 ```bash
 cd web
 npm ci
-npm run dev            # http://localhost:3000 · landing → Sign in → "Use the demo account"
+npm run dev            # http://localhost:3000 · landing → Open the demo
 ```
 
 **Full stack with Docker (Postgres, Redis, API, web):**
@@ -540,7 +540,7 @@ npx playwright test                     # end-to-end on desktop and phone (build
 | Silah-Genomics PRD layer (journey, care plan, family tree questions, check-in, clinic tools, live ClinVar and gnomAD, PWA basics) | Done and tested; see [docs/PRD_GAP.md](docs/PRD_GAP.md) for the few items that need real systems |
 | Seven languages end to end | Done; translations pending native-speaker and genetics review |
 | **Volunteer comprehension study** | **Tooling built and tested; study not yet run.** `/study` (consent, case, five-question check, rating), `/study/results` (summary and CSV export) and `scripts/analyse_study.py` are ready ([docs/study/protocol.md](docs/study/protocol.md)). It still needs real participants and an ethics check, so the scorecard reports comprehension as not measured and no comprehension claims are made. |
-| Clinical validation, in-region hosting, accredited reviewers, real sign-in and data feed | Out of scope for a fictional demo. What a real pilot would need, with gates and decisions: [docs/PILOT_READINESS.md](docs/PILOT_READINESS.md) · [docs/pilot_plan.md](docs/pilot_plan.md) |
+| Clinical validation, in-region hosting, accredited reviewers, real sign-in and data feed | Planned for a supervised pilot. [Real-data rollout](docs/REAL_DATA_ROLLOUT.md) · [Pilot readiness](docs/PILOT_READINESS.md) |
 
 ## Documentation
 

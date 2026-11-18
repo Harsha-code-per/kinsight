@@ -19,3 +19,8 @@ test("live frequency validates ids, sends only the id, and tolerates unknown var
   expect(JSON.parse((fetchMock.mock.calls.flat()[1] as { body: string }).body).variables).toEqual({ id: "1-1-A-C", d: "gnomad_r4" });
   for (const bad of ["x", "7-1-A-C; drop", "Z-1-A-C"]) { expect(VARIANT_ID.test(bad)).toBe(false); await expect(liveFrequency([bad])).rejects.toThrow("422"); }
 });
+
+test("a GraphQL error is not treated as a missing variant", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ data: { variant: null }, errors: [{ message: "unavailable" }] })));
+  await expect(liveFrequency(["1-1-A-C"])).rejects.toThrow("503");
+});

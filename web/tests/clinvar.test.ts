@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { liveReclassify } from "../lib/clinvar";
+import { exploreGene, liveReclassify } from "../lib/clinvar";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -15,7 +15,11 @@ test("live ClinVar check sends only ids and alerts on a class crossing the 4/5 l
   await expect(liveReclassify({ "abc": 3 })).rejects.toThrow("422");
 });
 
-import { exploreGene } from "../lib/clinvar";
+test("an upstream error is distinct from an empty ClinVar response", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ error: "source unavailable" })));
+  await expect(liveReclassify({ "7105": 3 })).rejects.toThrow("503");
+  await expect(exploreGene("CFTR")).rejects.toThrow("503");
+});
 
 test("gene explorer validates the symbol and lists pathogenic records with their classes", async () => {
   const calls: string[] = [];
