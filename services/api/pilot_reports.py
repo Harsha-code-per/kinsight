@@ -9,6 +9,7 @@ from pydantic import AwareDatetime, Field, model_validator
 from .schemas import Alias, StrictModel
 
 SyntheticId = Annotated[Alias, Field(pattern=r"^synthetic-[A-Za-z0-9_-]+$")]
+FindingStatus = Literal["carrier", "not_detected", "uncertain", "not_tested"]
 FHIR_STATUS = {
     "registered": "preliminary",
     "partial": "preliminary",
@@ -34,7 +35,7 @@ class ScreeningReport(ReportRevision):
     panel_version: Alias
     status: Literal["preliminary", "final", "amended", "corrected", "cancelled", "entered-in-error"]
     findings: Annotated[
-        dict[Alias, Literal["carrier", "not_detected", "uncertain", "not_tested"]], Field(max_length=100)
+        dict[Alias, FindingStatus], Field(max_length=100)
     ]
 
     @model_validator(mode="after")

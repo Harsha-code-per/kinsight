@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from services.consent.audit import GENESIS, append_event, verify_chain
+from services.consent.audit import GENESIS, append_event, verify_chain, verify_tamper_example
 from services.consent.models import AuditEvent, Base
 
 
@@ -35,3 +35,7 @@ def test_chain_tamper_and_external_head():
         db.flush()
         assert not verify_chain(db, head)
     engine.dispose()
+
+
+def test_disposable_tamper_example_detects_a_changed_event():
+    assert not verify_tamper_example()

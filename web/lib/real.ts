@@ -33,12 +33,42 @@ async function json<T = any>(path: string, init: RequestInit = {}, tok?: string)
 }
 const post = (body: unknown): RequestInit => ({ method: "POST", body: JSON.stringify(body) });
 
+export type SandboxSubject = "synthetic-a" | "synthetic-b";
+export type SandboxReport = {
+  revision: number;
+  status: string;
+  issued_at: string;
+  findings: Record<string, Result["status"] | "not_tested">;
+};
+
 async function grant(grantee: string, rtype: string, rid: string, scope: string, fields: string[], purpose: string) {
   return json("/api/me/consents", post({ grantee_id: grantee, resource_type: rtype, resource_id: rid, scope, fields, purpose,
     expires_at: Date.now() / 1000 + 3000, text_shown: "Fictional consent text" }));
 }
 
 export const real = {
+  personalLabReport: () => json<{ state: "missing" | "pending" | "withdrawn" | "released"; revision: number | null; report: SandboxReport | null }>("/api/me/sandbox-report"),
+  shareLabReport: () => json("/api/me/sandbox-report/share", post({})),
+  async reviewLabReport(subject: SandboxSubject) {
+    const r = await raw(`/api/counsellor/sandbox-reports/${subject}`);
+    if (r.status === 403) return null;
+    if (!r.ok) throw new Error(String(r.status));
+    return r.json() as Promise<{ report: SandboxReport | null; approved: boolean }>;
+  },
+  async approveLabReport(subject: SandboxSubject, revision: number) {
+    const r = await raw(`/api/counsellor/sandbox-reports/${subject}/approve`, post({ revision }));
+    if (!r.ok) throw new Error(String(r.status));
+  },
+  sendLabReport: (subject: SandboxSubject, revision: number, status: "final" | "corrected") =>
+    json("/api/sandbox/lab/reports", post({
+      subject_id: subject, revision,
+      resource: {
+        resourceType: "DiagnosticReport", id: `${subject}-report`, subject: { reference: `Patient/${subject}` },
+        code: { text: "Synthetic carrier screen" },
+        status, issued: new Date().toISOString(), meta: { tag: [{ system: "https://kinsight.example/tags", code: "synthetic" }] },
+      },
+      findings: { COND_001: status === "corrected" ? "uncertain" : "carrier", COND_002: "not_tested" },
+    })),
   bookingSlots: (sla: number) => json(`/api/lifecycle/booking/slots?sla_hours=${sla}`),
   book: (body: z.infer<typeof plan.BookingRequestS>) => json("/api/lifecycle/booking", post(body)),
   cancelBooking: (id: string) => json(`/api/lifecycle/booking/${encodeURIComponent(id)}/cancel`, post({})),
@@ -140,7 +170,7 @@ export const real = {
     return { groups: Object.entries(d.cells).map(([k, n]) => ({ language: k.split("_")[0], reading_level: k.split("_")[1], n: n ?? 0, pass_rate: "—" })), gap_points: "—", target_gap_points: 10, label: "Counts only (suppressed and noised); pass rates need quiz results." };
   },
   capacity: () => json("/api/analytics/capacity/simulation"),
-  auditVerify: async () => json("/api/governance/audit-verify"),
+  auditVerify: (tamper = false) => json(`/api/governance/audit-verify${tamper ? "?tamper=true" : ""}`),
   async policy() { const d = await json("/api/governance/policy"); return { rules: [`Purposes: ${d.purposes.join(", ")}`, d.unrelated_use, "Default deny; no export route"] }; },
   async sources() { const d = await json("/api/governance/data-sources", {}, ""); return d.metadata.split("\n").filter((l: string) => l.startsWith("|") && !l.startsWith("|---")).slice(1).map((l: string) => { const c = l.split("|").map((x) => x.trim()); return { source: c[1], licence: c[2], kind: c[3] }; }); },
 };

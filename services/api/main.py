@@ -23,7 +23,7 @@ from sqlalchemy.pool import StaticPool
 from services.agents.flags import enabled
 from services.consent import sharing
 from services.consent.aggregates import release
-from services.consent.audit import verify_chain
+from services.consent.audit import verify_chain, verify_tamper_example
 from services.consent.models import (
     AuditEvent,
     Base,
@@ -47,9 +47,9 @@ from services.consent.policy import (
 )
 from services.consent.roles import PERSONAS
 from services.consent.settings import settings
-from services.lifecycle.store import LifecycleBase
+from services.lifecycle.store import LifecycleBase, SandboxReport
 
-from . import lifecycle_routes
+from . import lifecycle_routes, pilot_routes
 from .auth import Identity, issue_token, secret, verify_token
 from .backend import DemoBackend
 from .interfaces import Backend, Unavailable, UnwiredBackend
@@ -304,6 +304,7 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
         own(db, identity, "profile", RESOURCE_FIELDS["profile"])
         subject = identity.actor.id
         await adapter.delete_person(subject, db)
+        db.execute(delete(SandboxReport).where(SandboxReport.subject_id == subject))
         couples = select(Couple.id).where(
             or_(Couple.person_a == subject, Couple.person_b == subject)
         )
@@ -662,9 +663,11 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
         return Evaluation.model_validate(await adapter.invoke("evaluation", id, None, db))
 
     @app.get("/api/governance/audit-verify")
-    async def audit_verify(identity=Depends(roles("auditor")), db: Session = Depends(db_session)):
+    async def audit_verify(tamper: bool = False, identity=Depends(roles("auditor")), db: Session = Depends(db_session)):
         check(db, identity, ResourceRef("audit", "chain"), {"events"})
-        return {"valid": verify_chain(db), "is_synthetic": True}
+        if tamper and not demo:
+            raise HTTPException(403, "Demo unavailable")
+        return {"valid": verify_tamper_example() if tamper else verify_chain(db), "is_synthetic": True}
 
     @app.get("/api/governance/policy")
     async def policy(identity=Depends(roles("auditor")), db: Session = Depends(db_session)):
@@ -753,6 +756,8 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
             f"/api/demo/{operation}", demo_route(operation), methods=["POST"], response_model=Status
         )
 
+    if demo and os.environ.get("KINSIGHT_LAB_SANDBOX") == "1":
+        pilot_routes.register(app, db_session=db_session, roles=roles, check=check, own=own, limit=limit)
     return app
 
 

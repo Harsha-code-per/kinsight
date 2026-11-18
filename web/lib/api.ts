@@ -8,6 +8,7 @@ import * as plan from "./plan";
 import type { z as Zod } from "zod";
 
 export const MOCK = process.env.NEXT_PUBLIC_MOCK !== "0";
+export const LAB_SANDBOX = !MOCK && process.env.NEXT_PUBLIC_LAB_SANDBOX === "1";
 
 const Fictional = z.object({ is_synthetic: z.literal(true).optional() });
 export const ResultS = Fictional.extend({ condition_id: z.string(), status: z.enum(["carrier", "not_detected", "uncertain"]), label: z.string().optional(), label_ar: z.string().optional() });

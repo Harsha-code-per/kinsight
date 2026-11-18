@@ -22,6 +22,18 @@ async function signInAs(page: import("@playwright/test").Page, role: RegExp) {
   await page.getByRole("button", { name: role }).click();
 }
 
+test("audit tamper example leaves the shared audit chain intact", async ({ page }) => {
+  await signInAs(page, /^Auditor/);
+  await expect(page).toHaveURL(/\/governance$/);
+  const chain = page.getByTestId("chain");
+  await page.locator('[data-demo="verify"]').click();
+  await expect(chain).toHaveAttribute("data-valid", "true");
+  await page.locator('[data-demo="tamper"]').click();
+  await expect(chain).toContainText("Chain broken: tampering detected");
+  await page.locator('[data-demo="verify"]').click();
+  await expect(chain).toHaveAttribute("data-valid", "true");
+});
+
 test("family circle shows three generations with readable labels", async ({ page }) => {
   await signInAs(page, /^Person A/);
   await page.goto("/family");

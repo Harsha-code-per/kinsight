@@ -4,7 +4,7 @@ import hashlib
 import json
 import time
 
-from sqlalchemy import select
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from .models import AuditEvent
@@ -63,3 +63,19 @@ def verify_chain(session: Session, expected_head: str | None = None) -> bool:
             return False
         previous = event.hash
     return expected_head is None or previous == expected_head
+
+
+def verify_tamper_example() -> bool:
+    """Verify a deliberately altered fixture in a disposable database."""
+    engine = create_engine("sqlite://")
+    try:
+        AuditEvent.__table__.create(engine)
+        with Session(engine) as session:
+            event = append_event(
+                session, actor_ref="synthetic-actor", action="read", resource_type="result",
+                resource_ref="synthetic-result", decision="deny", reason_code="default_deny",
+            )
+            event.reason_code = "tampered"
+            return verify_chain(session)
+    finally:
+        engine.dispose()

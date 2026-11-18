@@ -15,6 +15,7 @@ PURPOSES = frozenset({"own_care", "couple_planning", "counselling", "family_noti
 RESOURCE_FIELDS = {
     "profile": {"id", "language", "reading_level"},
     "result": {"condition_id", "status", "panel_version"},
+    "sandbox_report": {"status", "brief"},
     "explanation": {"blocks", "released"},
     "consent": {"id", "grantee_id", "scope", "purpose", "expires_at", "revoked_at"},
     "audit": {"events"},
@@ -32,6 +33,7 @@ ROLE_RESOURCES = {
     "person": {
         "profile",
         "result",
+        "sandbox_report",
         "explanation",
         "consent",
         "audit",
@@ -41,7 +43,7 @@ ROLE_RESOURCES = {
     },
     "partner": {"couple", "result", "invitation"},
     "relative": {"result", "pedigree", "case", "invitation"},
-    "counsellor": {"case", "queue", "result", "explanation", "pedigree", "couple"},
+    "counsellor": {"case", "queue", "result", "explanation", "pedigree", "couple", "sandbox_report"},
     "analyst": {"aggregate", "evaluation"},
     "auditor": {"audit", "governance", "evaluation"},
     "demo_operator": {"demo"},
@@ -61,6 +63,7 @@ SCOPES = {
     "condition_findings": {"condition_id", "status", "panel_version", "findings"},
     "relationship_only": {"relationships", "warnings"},
     "quiz_status": {"id", "status", "quiz"},
+    "sandbox_review": {"brief"},
     "couple_pooling": {"tier", "shared_conditions", "findings", "engine_version"},
 }
 

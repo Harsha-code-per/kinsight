@@ -2,7 +2,9 @@
 
 ## Decision
 
-The evaluator’s concern is whether two people can sign in independently and see their own current screening results. KinSight currently has fictional personas, hard-coded case and couple aliases in the API client, and an API that labels its results synthetic. `NEXT_PUBLIC_MOCK=0` changes the transport to HTTP. A learning model cannot establish identity, retrieve a lab report, or determine which revision a clinician approved.
+The early-review feedback calls for a working laboratory feed, EHR/FHIR integration, and report parsing for synthetic cases. KinSight currently has fictional personas, hard-coded case and couple aliases in the API client, and an API that labels its results synthetic. `NEXT_PUBLIC_MOCK=0` changes the transport to HTTP. A learning model cannot establish identity, retrieve a lab report, or determine which revision a clinician approved. [Judge feedback and tracking issue](https://github.com/loktrishal-05/kinsight/issues/65)
+
+The opt-in lab sandbox now demonstrates synthetic report intake, consent and approval, and correction handling in the app. The independently hosted FHIR sandbox, EHR import, HL7 v2 feed, tracker integration, and document parsing remain separate submission tasks. The deployed result pages still use the demo backend. [FHIR sandbox](https://github.com/loktrishal-05/kinsight/issues/32) · [FHIR import](https://github.com/loktrishal-05/kinsight/issues/28) · [Lab feed](https://github.com/loktrishal-05/kinsight/issues/30) · [Report parsing](https://github.com/loktrishal-05/kinsight/issues/31)
 
 Start with one clinic, one lab, one supported panel and one reviewed language. The first pilot should display clinician-released reports and a clinician-reviewed couple summary after both partners consent. Treat missing coverage, ambiguous findings and an unavailable partner report as distinct states. ACMG and ACOG describe residual risk after a screen with no detected finding. Preserve that distinction and avoid producing a numerical estimate unless the clinical team validates the panel, inputs and calculation for the intended use. [ACMG carrier-screening practice resource](https://www.nature.com/articles/s41436-021-01203-z) · [ACOG carrier screening](https://www.acog.org/clinical/clinical-guidance/committee-opinion/articles/2017/03/carrier-screening-in-the-age-of-genomic-medicine)
 
@@ -42,3 +44,14 @@ From the repository root, run `python -m pytest -q tests/integration/test_pilot_
 `from_synthetic_fhir` accepts a synthetic-tagged `DiagnosticReport` with the expected relative patient reference, report status and issued timestamp. The caller supplies a numeric revision from the feed contract and separately mapped lab interpretations. Select the revision from the ordered source feed because FHIR `meta.versionId` can be opaque. The mapping is exercised with final and corrected reports. Public HL7 examples are useful for structural checks and Synthea can supply broader synthetic encounter scenarios. [FHIR R4 DiagnosticReport](https://hl7.org/fhir/R4/diagnosticreport.html) · [FHIR resource metadata](https://hl7.org/fhir/R4/resource.html#Meta) · [Synthea](https://synthetichealth.github.io/synthea/)
 
 The live ClinVar and gnomAD adapters returned data for the public demo variant IDs on 2026-11-18. Their upstream error envelopes now fail as unavailable instead of producing an empty lookup. The [data source inventory](../DATA_SOURCES.md) documents their role and provenance.
+
+## Run the lab sandbox
+
+Start the API with the normal local demo settings, `KINSIGHT_DEMO=1`, `KINSIGHT_DEMO_AUTH=1` and `KINSIGHT_LAB_SANDBOX=1`. Start the web app with `NEXT_PUBLIC_MOCK=0`, `NEXT_PUBLIC_LAB_SANDBOX=1`, and `KINSIGHT_API_URL` pointing to that API. Open **Lab report sandbox** from Home.
+
+1. As Person A, select **Share for review**. The grant expires after one hour and can be revoked from Consents.
+2. As the demo operator, send revision 1 for Person A. The intake posts a bounded synthetic FHIR `DiagnosticReport` and two labelled sample findings.
+3. As the counsellor, open Person A’s report and approve the revision. Person A’s open page checks for updates every five seconds. Person B can see only their own report.
+4. Send revision 2 as a correction. Person A sees a pending state until the counsellor approves revision 2.
+
+Use a fresh local database for the browser test. The sandbox routes are off by default. Writes use the existing demo-operator role. The intake accepts two fixed synthetic participants, two fictional condition identifiers, and a narrow report shape. Approvals and revisions persist in the database. No patient upload form is part of this workflow.

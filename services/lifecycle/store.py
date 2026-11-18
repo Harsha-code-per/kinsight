@@ -21,6 +21,14 @@ class LifecycleBase(DeclarativeBase):
     pass
 
 
+class SandboxReport(LifecycleBase):
+    __tablename__ = "lc_sandbox_report"
+    subject_id: Mapped[str] = mapped_column(String, primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    payload: Mapped[str] = mapped_column(Text)
+    approved: Mapped[bool] = mapped_column(default=False)
+
+
 class LcPairing(LifecycleBase):
     __tablename__ = "lc_pairing"
     id: Mapped[str] = mapped_column(String, primary_key=True)
