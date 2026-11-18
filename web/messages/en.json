@@ -143,7 +143,7 @@
   "reportCompare.ask.coverage": "Can I compare the tests directly?",
   "reportCompare.ask.questions": "What can I ask my counsellor?",
   "reportCompare.term.carrier": "The lab used carrier wording for this entry. A counsellor can explain how the finding relates to the condition and its inheritance pattern.",
-  "reportCompare.term.negative": "The lab reported a negative or not-detected finding for this entry. A negative screen leaves some risk. The test method and the regions or variants covered matter.",
+  "reportCompare.term.negative": "The lab reported that this finding was not detected. Some risk can remain after screening. Check which methods, regions and variants this test covered.",
   "reportCompare.term.uncertain": "The wording indicates uncertainty. The entry alone gives no basis for a diagnosis or a reliable risk estimate. Ask the lab or counsellor to explain what remains uncertain.",
   "reportCompare.term.other": "This is the wording entered from the report. To interpret it, review the original result with its test method, limits and the lab’s explanation.",
   "reportCompare.term.missing": "No entry was supplied from this report. Check the original to see whether this condition was included in its panel and how the result was reported.",
