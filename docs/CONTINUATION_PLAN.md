@@ -2,7 +2,7 @@
 
 ## Resume here
 
-Start from the latest `origin/main` and check the latest `ci` workflow run. Check open issue descriptions again for new decisions or ownership. Continue **#28** with an approved SMART sandbox, a registered OAuth client, and an identity binding from the validated launch to the clinic patient. Run the same consent, correction and release checks against that provider before enabling hosted imports. [Open issues](https://github.com/loktrishal-05/kinsight/issues) · [Latest CI](https://github.com/loktrishal-05/kinsight/actions/workflows/ci.yml)
+Start from the latest `origin/main` and check the latest `ci` run. Continue **#41** by tracing risk values from API responses to the couple, clinic and printable views, then enforce a common educational estimate label. In parallel, **#28** needs an approved SMART sandbox, a registered OAuth client, and an identity binding from the validated launch to the clinic patient. Run the consent, correction and release checks against that provider before enabling hosted imports. [Open issues](https://github.com/loktrishal-05/kinsight/issues) · [Latest CI](https://github.com/loktrishal-05/kinsight/actions/workflows/ci.yml)
 
 ## Work shipped so far
 
@@ -15,7 +15,7 @@ Start from the latest `origin/main` and check the latest `ci` workflow run. Chec
 | #42, #43 (closed) | The full route inventory checks default and opt-in routes, including a failing unguarded-route example. Property tests cover role, active grants, field projection, revocation and auditing. The deployed tamper example reports the broken synthetic entry. | Apply the route inventory to new integrations as they ship. |
 | #56 (closed) | The language menu ships seven packs, the README badge is checked against the manifest, and Kin tests cover all seven languages, including mixed scripts. | Independent review of translated wording is tracked in #45. |
 | #57 (closed) | GitHub recognizes the contributor policy, issue templates, pull request template and CODEOWNERS. Private vulnerability reporting and Dependabot alerts are enabled. | Keep verified write-access owners current. |
-| #58, #61 | Updated Next.js and React. CI runs Python and web suites, the HAPI round trip, and existing audit checks. | Finish the dependency and CI gates and record performance evidence. |
+| #58, #61 | Updated Next.js, React and the web test dependencies. CI runs Python and web suites, the HAPI round trip, and a blocking npm audit. Actions are pinned, and Dependabot updates are grouped. | Add remaining CodeQL, secret-scan and coverage gates, resolve Python audit policy, and record Lighthouse comparisons. |
 | #62 (closed) | Removed stale reported totals, linked the generated scorecard and CI, corrected licence and hosting notes, and recorded the architecture decisions. | Update the changelog and traceability table when milestones ship. |
 
 The issue tracker remains open. Reproduce each acceptance criterion before calling the corresponding issue complete.
