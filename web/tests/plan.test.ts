@@ -7,6 +7,7 @@ import { real } from "../lib/real";
 import { GcosRequestS, NasabRequestS, RELATIONS } from "../lib/plan";
 import { DATA } from "../lib/fixtures";
 import en from "../messages/en.json";
+import languages from "../messages/languages.json";
 
 beforeEach(() => mock.reset());
 afterEach(() => vi.restoreAllMocks());
@@ -98,7 +99,7 @@ test("real care-plan adapters preserve JSON and Bearer transport", async () => {
 
 test("every language has draft care-plan messages", () => {
   const keys = Object.keys(en).filter((key) => key.startsWith("plan."));
-  for (const lang of ["en", "ar", "hi", "kn", "ml", "ta", "te", "ur"]) {
+  for (const { code: lang } of languages) {
     const messages = JSON.parse(readFileSync(new URL(`../messages/${lang}.json`, import.meta.url), "utf8"));
     for (const key of keys) { expect(messages[key]).toBeTypeOf("string"); expect(messages[key]).not.toMatch(/\?{2}|0% risk/); }
   }

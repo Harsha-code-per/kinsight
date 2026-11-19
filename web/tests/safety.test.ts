@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { real } from "../lib/real";
 import { geneCall, triagePreset, TRIAGE_PRESETS } from "../lib/safety";
 import en from "../messages/en.json";
+import languages from "../messages/languages.json";
 import { readFileSync } from "node:fs";
 
 beforeEach(() => mock.reset());
@@ -96,7 +97,7 @@ test("real adapters preserve JSON contract and use existing Bearer transport", a
 
 test("every language includes the safety and navigation keys", () => {
   const keys = Object.keys(en).filter((k) => k.startsWith("safety.") || ["nav.checkin", "nav.clinic"].includes(k));
-  for (const lang of ["ar", "hi", "kn", "ml", "ta", "te", "ur"]) {
+  for (const { code: lang } of languages) {
     const messages = JSON.parse(readFileSync(new URL(`../messages/${lang}.json`, import.meta.url), "utf8"));
     for (const key of keys) { expect(messages[key]).toBeTypeOf("string"); expect(messages[key]).not.toMatch(/\?{2}/); }
   }
