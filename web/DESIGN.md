@@ -200,7 +200,7 @@ A cool, low-chroma daylight palette with one deep teal accent and one warm sand 
 ## Typography
 
 **Display Font:** Bricolage Grotesque Variable, with Reem Kufi for Arabic (fallback Noto Sans Arabic, system-ui)
-**Body Font:** Plus Jakarta Sans Variable, with Noto Sans Arabic Variable (Arabic and Urdu documents switch to Noto first)
+**Body Font:** Plus Jakarta Sans Variable, with Noto Sans Arabic Variable for Arabic
 
 **Character:** A wide, warm grotesque with tight negative tracking for story headlines, over a clear humanist sans with tabular figures, because numbers here must line up and never feel like a sales pitch.
 

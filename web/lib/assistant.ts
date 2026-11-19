@@ -72,7 +72,12 @@ export function answer(input: string, ctx: Ctx): Reply {
   const lang = detectLang(text, ctx.uiLang);
   const t = pack(lang), label = (href: string) => t.pages[href];
   const low = text.toLowerCase();
-  for (const [code, re] of GUARDS) if (re.test(text) || said(lang, low, `guard_${code}`)) return reply(lang, t.refusal, code, [], [], true);
+  const guardLanguages = SCRIPTS.filter(([, script]) => text.search(script) >= 0).map(([code]) => code);
+  for (const [code, re] of GUARDS) {
+    if (re.test(text) || guardLanguages.some((language) => said(language, low, `guard_${code}`))) {
+      return reply(lang, t.refusal, code, [], [], true);
+    }
+  }
 
   if (/^\s*(hi|hello|hey|salam|good (morning|evening))\b|^\s*(مرحبا|السلام|اهلا|أهلا|هلا)/i.test(text) || said(lang, low, "greet")) return reply(lang, t.greet, "greet");
   if (/\b(thanks?|thank you|cheers)\b|شكرا|شكراً|يعطيك/i.test(text) || said(lang, low, "thanks")) return reply(lang, t.thanks, "thanks");

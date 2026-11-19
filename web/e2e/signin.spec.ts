@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import languages from "../messages/languages.json";
 
 test("landing opens the fictional demo without collecting credentials", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("ks_user", "old-demo-username"));
@@ -27,4 +28,13 @@ test("demo entry works with reduced motion and in Arabic", async ({ page }) => {
   await expect(page.locator("video")).toHaveCount(0);
   await page.getByTestId("signin-submit").click();
   await expect(page).toHaveURL(/\/home$/);
+});
+
+test("a retired language preference returns to the shipped language menu", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("ks_lang", "ur"));
+  await page.goto("/signin");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("ks_lang"))).toBe("en");
+  const languagesMenu = page.getByTestId("language-select").first();
+  await expect(languagesMenu).toHaveValue("en");
+  await expect(languagesMenu.getByRole("option")).toHaveCount(languages.length);
 });

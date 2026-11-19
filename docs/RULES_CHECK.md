@@ -26,5 +26,5 @@ Status: **met**, **partial** (explained) or **open** (needs people). The full "C
 
 Optional Phase 5 items (all behind `configs/flags.yaml`): Mode B rewrite (judge injected, off), options explorer and values
 questions (on), counsellor brief (on), copilot + red-team (on), non-stigma suite (on), voice (on, falls back to text), private
-partner check (off, unaudited demo), extra language scaffold (on; Urdu is an English-copy placeholder), FHIR-style export
+partner check (off, unaudited demo), FHIR-style referral export
 (off, function only, no route).

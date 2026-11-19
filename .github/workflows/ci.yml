@@ -10,6 +10,7 @@ jobs:
       - run: pip install -e ".[dev,api]" pip-audit
       - run: ruff check services tests scripts
       - run: python scripts/license_inventory.py --check
+      - run: python -m scripts.sync_language_badge --check
       - run: pytest -q
       - run: python scripts/demo.py
       - name: secret scan (simple)

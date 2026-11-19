@@ -49,7 +49,7 @@ M = weeks, L = months, mostly waiting on people or approval.
 
 ### B. Language and content review (size M per language, runs in parallel)
 - **Missing:** native-speaker and genetics sign-off. Arabic, Hindi, Tamil, Telugu, Kannada and Malayalam are machine drafts
-  (explanation blocks at two reading levels, quiz, wording rules, interface, Learn, Kin, study consent). Urdu is a hidden placeholder.
+  (explanation blocks at two reading levels, quiz, wording rules, interface, Learn, Kin, study consent).
 - **Needs:** two reviewers per language (a native speaker with health-communication experience and a genetics professional),
   recorded in `docs/REVIEWS.md`; wording rules per language reviewed by the same people.
 - **Suggestion:** pilot in English plus the one or two languages the site actually needs, rather than all seven.

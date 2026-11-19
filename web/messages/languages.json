@@ -40,12 +40,5 @@
     "name": "മലയാളം",
     "short": "മ",
     "dir": "ltr"
-  },
-  {
-    "code": "ur",
-    "name": "اردو (placeholder)",
-    "short": "UR",
-    "dir": "rtl",
-    "hidden": true
   }
 ]

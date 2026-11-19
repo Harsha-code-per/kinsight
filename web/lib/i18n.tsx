@@ -6,7 +6,7 @@ import languages from "@/messages/languages.json";
 // A new language = a messages/<code>.json file plus one line in messages/languages.json. No code changes.
 export type Lang = string;
 export type Level = "basic" | "standard";
-export const LANGUAGES = languages as { code: string; name: string; short: string; dir: "ltr" | "rtl"; hidden?: boolean }[];
+export const LANGUAGES = languages;
 type Msgs = Record<string, string>;
 
 type Ctx = { lang: Lang; level: Level; setLang: (l: Lang) => void; setLevel: (l: Level) => void; t: (k: string) => string; td: (k: string) => string };
@@ -21,7 +21,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [level, setLevel] = useState<Level>("standard");
   const [msgs, setMsgs] = useState<Msgs>(en as Msgs);
   const [ready, setReady] = useState(false); // do not overwrite the stored preference before it is read
-  useEffect(() => { setLang(read("ks_lang", "en")); setLevel(read("ks_level", "standard") as Level); setReady(true); }, []);
+  useEffect(() => {
+    const stored = read("ks_lang", "en");
+    setLang(LANGUAGES.some(({ code }) => code === stored) ? stored : "en");
+    setLevel(read("ks_level", "standard") as Level);
+    setReady(true);
+  }, []);
   useEffect(() => {
     if (!ready) return;
     const dir = LANGUAGES.find((l) => l.code === lang)?.dir ?? "ltr";

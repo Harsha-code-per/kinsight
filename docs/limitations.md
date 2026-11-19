@@ -9,7 +9,7 @@
 - Differential-privacy noise uses a budget ledger but suppression is deterministic, so this is not a claim of end-to-end formal privacy.
 - Audit chain detects modification, deletion and forks; detecting tail truncation needs an externally stored head hash (supported, not provisioned).
 - Demo authentication uses fictional personas and signed short-lived tokens; production would need real identity and in-region hosting.
-- Optional items are built behind flags (`configs/flags.yaml`): voice depends on browser speech support; the partner check is an unaudited demo; FHIR export is a function with no route; the third language (Urdu) is an English-copy placeholder; Mode B needs an injected model and judge and is off.
+- Optional items use `configs/flags.yaml`. Voice depends on browser speech support. The partner check is an unaudited demo. The FHIR referral export function has no route. Mode B requires a model and judge and is off.
 - Dependencies include Python 3.10+, LangGraph 1.x, FastAPI, SQLAlchemy 2, and Next.js 16. The web build uses Node.js 22 in CI and Docker.
-- Copilot guard and red-team set (P5-4): keyword rules were tuned on the 109 prompts in tests/redteam/prompts.yaml (English 87, Arabic 22; Hindi, Tamil, Telugu, Kannada and Malayalam have working guards and smoke tests but no adversarial set), so a pass is a regression gate, not evidence of robustness. A model judge plus fresh adversarial prompts is needed before any real use.
+- The Python copilot red-team set has 109 English and Arabic prompts. The web assistant also exercises adversarial cases in Hindi, Tamil, Telugu, Kannada and Malayalam. These regression tests cover specific patterns. Native-speaker and independent safety review remain pending.
 - Demo reset restores the case, quiz and referral state but keeps consent rows and the audit chain, so re-running the live demo flow on the same database fails on duplicate grants; use 'docker compose down -v' for a clean demo.
