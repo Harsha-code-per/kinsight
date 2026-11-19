@@ -45,7 +45,7 @@ lines += [f"- Cohort: {score['cohort']['couples']} synthetic couples, consanguin
 lines += [f"  - {r['policy']}: median {r['median_days']} d, p95 {r['p95_days']} d, tier 3 within window "
           f"{r['tier3_within_window']:.0%}" for r in cap["runs"]]
 lines += ["- Comprehension: not measured. The volunteer study has not been run.", ""]
-(ROOT / "docs/SCORECARD.md").write_text("\n".join(lines), encoding="utf-8")
+(ROOT / "docs/internal/SCORECARD.md").write_text("\n".join(lines), encoding="utf-8")
 
 lim = ["# Limitations statement (generated; see docs/limitations.md for detail)", "",
        "- All data are synthetic. No real genomes or personal data are stored, and every screen says results are fictional.",

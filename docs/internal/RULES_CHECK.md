@@ -1,7 +1,7 @@
 # Final rules check (P6-7) against spec section 1 and the data register
 
 Status: **met**, **partial** (explained) or **open** (needs people). The full "Challenge rules" document was not available
-(registration needed), so `docs/RULES_DELTA.md` is empty; re-check this table once it is read.
+(registration needed), so the [rules delta](RULES_DELTA.md) is empty. Recheck this table after review.
 
 | Rule / requirement | Status | Evidence |
 |---|---|---|

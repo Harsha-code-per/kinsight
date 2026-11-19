@@ -101,7 +101,7 @@ Plus a cinematic public landing page, and a demo sign-in with a background film.
 ### Added from the Silah-Genomics master PRD
 
 A research PRD for the Abu Dhabi challenge asked for more of the day-to-day journey around a result. All of it is built on the same
-deterministic, consent-first core ([docs/PRD_GAP.md](docs/PRD_GAP.md) lists every PRD item and its status).
+deterministic, consent-first core ([PRD status](docs/internal/PRD_GAP.md) lists every PRD item and its status).
 
 | Screen | What it does |
 |---|---|
@@ -111,8 +111,7 @@ deterministic, consent-first core ([docs/PRD_GAP.md](docs/PRD_GAP.md) lists ever
 | **Check-in and privacy tools** (`/checkin`) | Waiting-period check-in scoring, safe vault with a decoy PIN, anonymous family notice (no sender link, random 24-72 h delay) |
 | **Clinic tools** (`/clinic`) | Deterministic escalation rules (orthogonal hold, multi-gene, compound heterozygote, pregnancy window), live ClinVar reclassification alerts, live gnomAD population frequencies, completion notice with no genetic fields, dual-clinician emergency access |
 
-**Live public data.** Reclassification alerts and a gene-by-gene variant explorer read **NCBI ClinVar** (over a thousand pathogenic records for a gene like CFTR), and the frequency card reads **gnomAD v4**, all live and key-free;
-only variant ids are sent. People, results and the panel stay fictional by design; the counsellor console holds a 40-case synthetic caseload drawn from the 1,500-couple cohort.
+**Live public data.** Reclassification alerts and the variant explorer read **NCBI ClinVar**. The frequency card reads **gnomAD v4**. These reference lookups use public variant identifiers or gene symbols. The counsellor console uses a seeded fictional caseload.
 
 **Offline basics.** The app installs as a PWA and keeps its shell and static assets for offline use; API responses are never cached.
 
@@ -134,7 +133,7 @@ only variant ids are sent. People, results and the panel stay fictional by desig
 </table>
 
 <details>
-<summary><b>More screens</b> (15 more, plus phone views)</summary>
+<summary><b>More screens and phone views</b></summary>
 <br/>
 
 <table>
@@ -191,8 +190,8 @@ flowchart TB
     S["Demo sign-in<br/>background film"]
     UI["App screens<br/>result · couple · family · consents · privacy<br/>counsellor · analyst · governance · methods"]
     K["Kin assistant<br/>chat + browser voice"]
-    D["Guided demo<br/>42 steps"]
-    I18N["i18n · 7 languages<br/>messages/ + content/"]
+    D["Guided demo"]
+    I18N["i18n<br/>messages/ + content/"]
   end
 
   subgraph API["API · FastAPI (services/api)"]
@@ -243,7 +242,7 @@ flowchart TB
 | Consent first | Every read goes through `services.consent.policy.decide()` (default deny, field projection, one audit event per decision). No export route exists, and a test enforces that. |
 | Humans close the loop | Tier 3 cases stop at `counsellor_gate`; a referral cannot close without recorded evidence. |
 | Configuration, not code | Panels, escalation rules, wording, case timings, capacity and languages live in `configs/` and `templates/`. |
-| Everything measured | Golden files, a 40-couple evaluation gate, a 109-prompt red-team set, privacy and non-stigma suites, end-to-end browser tests. |
+| Verification | Golden files, an explanation evaluation gate, assistant red-team prompts, privacy and non-stigma suites, and browser tests. |
 
 ## Workflows
 
@@ -339,7 +338,7 @@ flowchart LR
 ```
 
 Kin is deterministic and read-only: no model call, no server-side storage, no audio stored. Its rules mirror the Python
-copilot guard and are tested against the same 109-prompt red-team set.
+copilot guard. The web suite also exercises adversarial prompts across the shipped languages.
 
 ### 5. User journey
 
@@ -386,24 +385,13 @@ until a native speaker and a genetics reviewer sign them off ([docs/REVIEWS.md](
 
 ## Quality and evaluation
 
-Reproducible from the committed seed ([docs/SCORECARD.md](docs/SCORECARD.md), `python scripts/scorecard.py`):
+Run `python scripts/scorecard.py` to reproduce the synthetic cohort, explanation, assistant guard and illustrative time-to-care metrics in the [generated scorecard](docs/internal/SCORECARD.md). The volunteer comprehension study is pending.
 
-| Measure | Result |
-|---|---|
-| Synthetic cohort | 1,500 couples · consanguinity share 0.512 · mean inbreeding coefficient 0.0203 |
-| Explanation drafts (40 golden couples × 7 languages × 2 levels) | **560** · numeric fidelity **100%** · block conformity **100%** · banned phrases **0** |
-| Assistant red-team set | **109 / 109** refused or answered safely |
-| Analytics privacy | cells under 10 suppressed · budget 2.0 (0.5 per release) |
-| Time to counsellor contact (illustrative simulation) | first-come: median 1.7 d · tier priority: median 0.6 d, tier 3 within window 100% |
-| Comprehension | **Not measured yet:** the volunteer study has not been run (see below) |
+The [CI workflow](.github/workflows/ci.yml) runs Python and web checks, builds the app and exercises the synthetic HAPI server. Each run records the test totals.
 
-| Test suite | Count |
-|---|---|
-| Python (unit, property, golden, integration, privacy, red-team, eval gate, study analysis, lifecycle API) | 716 |
-| Web unit (Vitest: Kin rules, multilingual guards, mock API, study scoring, lifecycle, live data clients) | 65 |
-| End-to-end (Playwright, desktop + phone: demo path, landing, sign-in, volunteer study, Kin with stubbed speech) | 68 |
+## What changed after the early review
 
-CI runs ruff, pytest, the demo path, a secret scan, TypeScript checks, Vitest, a production build and Playwright on every push.
+KinSight added a signed synthetic lab feed, local report comparison, version-specific FHIR confirmation and counsellor review. The [feedback traceability table](docs/EARLY_REVIEW.md) links each verified change to its acceptance evidence and lists the remaining work.
 
 ## Tech stack
 
@@ -425,26 +413,17 @@ CI runs ruff, pytest, the demo path, a secret scan, TypeScript checks, Vitest, a
 | API | Render, **Virginia** (`kinsight-api-va`) | Docker image from `Dockerfile.api`, free plan; defined in `render.yaml` |
 | Database | Neon Postgres, Washington D.C. | Free plan, no expiry; `DATABASE_URL` is set in the Render dashboard (never in the repo) |
 
-**Why Virginia.** The API first ran in Oregon with the database in Washington, so every database round trip crossed the country.
-Moving the API next to the database cut a typical call from about 0.8-1.3 s to about 0.3 s, and the counsellor queue from 3.8 s to
-0.9 s. The Virginia service reuses the Oregon service's `DATABASE_URL` through Render's `fromService`, so no secret is stored in
-`render.yaml`. The older Oregon service (`kinsight-api`) is unused and can be deleted in the Render dashboard.
+**API region.** The Virginia service is closer to the database. It currently inherits its database URL from the Oregon service through Render's `fromService` configuration. Replace that dependency before retiring the earlier service.
 
-**Free-plan limits.** The API sleeps after about 15 minutes idle, so the first request after a quiet spell can take up to a minute; the
-site then shows a short "waking up the server" notice. A scheduled GitHub Action (`keepalive.yml`) pings `/api/health` every 10
-minutes to reduce this. `/api/health` also reports the database kind (`postgresql` and its provider, never a connection detail).
+**Cold starts.** The site shows a waiting notice while an idle API starts. The [keepalive workflow](.github/workflows/keepalive.yml) probes `/api/health`, which reports database type and provider without connection details.
 
 To run your own copy: create a free Neon database, deploy `render.yaml` as a Render Blueprint, paste the Neon string into
 `DATABASE_URL`, then set `NEXT_PUBLIC_MOCK=0` and `KINSIGHT_API_URL` on a Vercel project.
 
 ## Counsellor caseload and access trail
 
-- **Caseload.** The counsellor console opens with a fictional caseload of 40 cases drawn (fixed seed) from the 1,500-couple demo
-  cohort (`services/api/demo_cases.py`). The tiers are interleaved, so every page of the queue shows a realistic mix; the queue is
-  paged (12 by default, up to 50; the web app asks for 24). Each case is assigned to the demo counsellor with the owner's consent
-  recorded, so every read goes through the same default-deny consent policy as the live demo case.
-- **Auditing a list.** A queue read is one audit entry; allowed rows are not logged one by one, while every refusal is still logged
-  per case. This kept the queue to about 17 database statements instead of about 500.
+- **Caseload.** The counsellor console opens a seeded fictional queue with interleaved tiers and pagination. Each case is assigned to the demo counsellor with the owner's consent recorded.
+- **Auditing a list.** The authorized queue read is audited once. Individual denied cases are also audited.
 - **Your access trail.** The Privacy centre shows the person's own trail from the audit log (`GET /api/me/access-log`): who (you or
   someone with access), what, and the outcome, newest first; never the content, and never another person's events.
 - **Family circle.** The API returns the whole demo family (grandparents, parents, the first-cousin couple, who is related to whom)
@@ -529,13 +508,12 @@ cd web && NEXT_PUBLIC_MOCK=0 npm run build && npm start      # /api is proxied t
 **Guided demo:** open `/?demo=1` (or `/?demo=<language code>`, e.g. `?demo=hi`). Space pauses, the arrow keys step, Esc stops.
 
 **Demo data:** `python scripts/export_web_fixtures.py` regenerates `web/lib/fixtures/data.json` from the real engine and verified
-templates (7 cases across every tier, 30 conditions, a 26-case queue, weekly series, comprehension and capacity grids) in all
-seven languages. A test fails if the file drifts from the engine.
+templates. Fixtures cover every tier, conditions, a counsellor queue, comprehension and capacity across the shipped languages. A test fails if the file drifts from the engine.
 
 ## Testing
 
 ```bash
-python -m pytest -q                     # Python suites, including the 560-draft eval gate
+python -m pytest -q                     # Python tests and the explanation evaluation gate
 cd web
 npx tsc --noEmit && npx vitest run      # types, Kin rules and multilingual guards
 npx playwright test                     # end-to-end on desktop and phone (builds the app first)
@@ -547,7 +525,7 @@ npx playwright test                     # end-to-end on desktop and phone (build
 |---|---|
 | Engine, consent, audit, case graph, API, web app, dashboards | Done and tested |
 | Cinematic landing, demo sign-in | Done and tested |
-| Silah-Genomics PRD layer (journey, care plan, family tree questions, check-in, clinic tools, live ClinVar and gnomAD, PWA basics) | Done and tested; see [docs/PRD_GAP.md](docs/PRD_GAP.md) for the few items that need real systems |
+| Silah-Genomics PRD layer (journey, care plan, family tree questions, check-in, clinic tools, live ClinVar and gnomAD, PWA basics) | Synthetic demo coverage and outstanding provider work are listed in the [PRD status](docs/internal/PRD_GAP.md). |
 | Seven languages end to end | Done; translations pending native-speaker and genetics review |
 | **Volunteer comprehension study** | **Tooling built and tested; study not yet run.** `/study` (consent, case, five-question check, rating), `/study/results` (summary and CSV export) and `scripts/analyse_study.py` are ready ([docs/study/protocol.md](docs/study/protocol.md)). It still needs real participants and an ethics check, so the scorecard reports comprehension as not measured and no comprehension claims are made. |
 | Clinical validation, in-region hosting, accredited reviewers, real sign-in and data feed | Planned for a supervised pilot. [Real-data rollout](docs/REAL_DATA_ROLLOUT.md) · [Pilot readiness](docs/PILOT_READINESS.md) |
@@ -560,11 +538,11 @@ npx playwright test                     # end-to-end on desktop and phone (build
 | Architecture (detail) | [docs/architecture.md](docs/architecture.md) |
 | Model card · limitations | [docs/model_card.md](docs/model_card.md) · [docs/limitations.md](docs/limitations.md) |
 | Pilot readiness · pilot plan · study protocol | [docs/PILOT_READINESS.md](docs/PILOT_READINESS.md) · [docs/pilot_plan.md](docs/pilot_plan.md) · [docs/study/protocol.md](docs/study/protocol.md) |
-| Scorecard · rules check · demo script | [docs/SCORECARD.md](docs/SCORECARD.md) · [docs/RULES_CHECK.md](docs/RULES_CHECK.md) · [docs/demo_script.md](docs/demo_script.md) |
+| Scorecard · rules check · demo script | [Scorecard](docs/internal/SCORECARD.md) · [Rules check](docs/internal/RULES_CHECK.md) · [Demo script](docs/demo_script.md) |
 | Deviations · open questions · reviews | [docs/DEVIATIONS.md](docs/DEVIATIONS.md) · [docs/OPEN_QUESTIONS.md](docs/OPEN_QUESTIONS.md) · [docs/REVIEWS.md](docs/REVIEWS.md) |
 | Design system · product brief | [web/DESIGN.md](web/DESIGN.md) · [web/PRODUCT.md](web/PRODUCT.md) |
 | Data sources and licences | [DATA_SOURCES.md](DATA_SOURCES.md) |
-| Licence · dependency licence inventory | [MIT](LICENSE) for the code and wording in this repository; data sources keep their own terms · [docs/LICENSES.md](docs/LICENSES.md) lists all 95 runtime packages (Python and web), the weak-copyleft ones with a written review; CI fails on any new unreviewed copyleft or unknown licence (`python scripts/license_inventory.py --check`). |
+| Licence · dependency licence inventory | Repository code and wording use the [MIT Licence](LICENSE). Data sources retain their own terms. The [dependency inventory](docs/LICENSES.md) records licence reviews. CI checks for unreviewed Python dependency licences. |
 
 ## Licence
 

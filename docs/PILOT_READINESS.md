@@ -27,7 +27,7 @@ prototype. The path to a limited, supervised pilot is in section 4; the decision
 | Capability | State | Where |
 |---|---|---|
 | Deterministic genetics engine (kinship, couple risk, tiers) | Built, tested (golden files, property tests) | `services/genetics`, `tests/` |
-| Approved-wording pipeline with a verifier (numbers equal the engine's, banned and stigmatising phrases, readability) | Built; 560 of 560 drafts verified across 7 languages | `services/agents`, `docs/SCORECARD.md` |
+| Approved-wording pipeline with a verifier (numbers equal the engine's, banned and stigmatising phrases, readability) | Regression results are generated from the demo cohort | `services/agents`, [scorecard](internal/SCORECARD.md) |
 | Consent on every read, hash-chained audit, analytics suppression | Built, tested | `services/consent`, `tests/integration` |
 | Counsellor gate and referral tracking with evidence required to close | Built, tested | `services/agents/case_graph.py`, `referral.py` |
 | Role screens (person, relative, counsellor, analyst, auditor) | Built, 62 end-to-end tests | `web/` |
@@ -60,7 +60,7 @@ M = weeks, L = months, mostly waiting on people or approval.
 - **Missing:** review of the formulas, assumptions, panel, frequencies, sensitivities and the tier and escalation rules by a
   clinical geneticist. The 30-condition panel is illustrative; the 1990s consanguinity-share defaults are dated.
 - **Needs:** a named clinical geneticist (or the programme's genetics service), the real condition panel and local frequencies.
-- **Done when:** the model card and `docs/RULES_DELTA.md` record the review, the panel is replaced by the real one, the golden files
+- **Done when:** the model card and [rules delta](internal/RULES_DELTA.md) record the review, the panel is replaced by the real one, the golden files
   are regenerated and approved, and every limitation that no longer applies is removed from `docs/limitations.md`.
 
 ### D. Identity, access and security (size M to L)
@@ -144,7 +144,7 @@ success measure.
 
 | Claim | Where to verify |
 |---|---|
-| 560 drafts, 100% numeric fidelity, 0 banned phrases | `docs/SCORECARD.md`, `python scripts/scorecard.py` |
+| Draft verification results | [Scorecard](internal/SCORECARD.md), `python scripts/scorecard.py` |
 | 109-prompt red-team set (en 87, ar 22) | `tests/redteam/prompts.yaml` |
 | Test counts (Python 491, Vitest 32, Playwright 62) and CI | `.github/workflows/ci.yml`, GitHub Actions |
 | Known limitations | `docs/limitations.md`, `docs/limitations_generated.md` |
