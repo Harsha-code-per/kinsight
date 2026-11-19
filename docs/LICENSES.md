@@ -25,13 +25,13 @@ KinSight's own code and wording are [MIT](../LICENSE). Licenses below are each p
 | Modified BSD License | 1 | jsonpointer 3.5 |
 | PSF-2.0 | 1 | typing_extensions 4.16.0 |
 
-## Python dev and test only (8 packages)
+## Python dev and test only (10 packages)
 
 | License | Count | Packages |
 | --- | --- | --- |
 | MIT | 4 | iniconfig 2.3.1, pluggy 1.7.0, pytest 9.1.1, ruff 0.17.2 |
 | Apache 2.0 | 1 | sortedcontainers 2.4.0 |
-| BSD License | 1 | colorama 0.4.6 |
+| BSD License | 3 | colorama 0.4.6, fhir.resources 8.3.0, fhir_core 1.1.12 |
 | BSD-2-Clause | 1 | Pygments 2.21.0 |
 | MPL-2.0 **(copyleft)** | 1 | hypothesis 6.168.5 |
 

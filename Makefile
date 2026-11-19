@@ -1,5 +1,6 @@
 PY ?= python
-.PHONY: test lint cohort demo up
+FHIR_URL ?= http://127.0.0.1:8088/fhir
+.PHONY: test lint cohort demo up fhir-seed
 test:
 	$(PY) -m pytest -q
 lint:
@@ -10,3 +11,5 @@ demo:
 	$(PY) scripts/demo.py
 up:
 	docker compose up --build
+fhir-seed:
+	$(PY) -m scripts.export_fhir_bundles --upload "$(FHIR_URL)"

@@ -14,6 +14,16 @@ jobs:
       - run: python scripts/demo.py
       - name: secret scan (simple)
         run: "! grep -rEn '(AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20,}|BEGIN (RSA )?PRIVATE KEY)' --exclude-dir=node_modules --exclude-dir=.git ."
+      - name: Verify FHIR R4 seed on HAPI
+        timeout-minutes: 6
+        env:
+          KINSIGHT_FHIR_TEST_URL: http://127.0.0.1:8088/fhir
+        run: |
+          cp .env.example .env
+          docker compose up -d fhir
+          curl --retry 35 --retry-connrefused --retry-delay 3 --max-time 5 --fail --silent --show-error "$KINSIGHT_FHIR_TEST_URL/metadata" > /dev/null
+          make fhir-seed FHIR_URL="$KINSIGHT_FHIR_TEST_URL"
+          pytest -q tests/integration/test_fhir_seed.py
       - run: pip-audit || true   # report only; tighten once the baseline is clean
   web:
     runs-on: ubuntu-latest

@@ -497,6 +497,16 @@ make cohort            # rebuild the synthetic demo cohort
 make demo              # run the scripted demo path
 ```
 
+**FHIR R4 sandbox with synthetic reports**
+
+```bash
+pip install -e ".[dev]"
+docker compose up -d fhir
+make fhir-seed
+```
+
+Wait for [HAPI metadata](http://127.0.0.1:8088/fhir/metadata) before seeding. The command prints four fixture patient IDs. The local server listens on loopback and has no login. Run `python -m scripts.export_fhir_bundles --upload http://127.0.0.1:8088/fhir --correction` after seeding to publish a corrected report. Re-seeding restores the initial fixtures. See the [FHIR sandbox walkthrough](docs/REAL_DATA_ROLLOUT.md#seed-the-fhir-r4-sandbox) for the offline export and round-trip test.
+
 **Python locally:**
 
 ```bash
