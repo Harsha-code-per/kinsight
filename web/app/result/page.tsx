@@ -2,10 +2,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, MessageSquareText } from "lucide-react";
 import Link from "next/link";
+import FhirFindings from "@/components/FhirFindings";
 import { Notice, PageHeader, StatusChip } from "@/components/ui";
 import { ReadAloud } from "@/components/Voice";
 import { api, FHIR_SANDBOX } from "@/lib/api";
-import { conditionLabel, rowLabel } from "@/lib/fixtures";
+import { rowLabel } from "@/lib/fixtures";
 import { useI18n } from "@/lib/i18n";
 import { real } from "@/lib/real";
 import { useSession } from "@/lib/session";
@@ -54,28 +55,40 @@ export default function MyResult() {
 }
 
 function FhirReportPreview() {
-  const { t, lang } = useI18n();
-  const preview = useMutation({ mutationFn: real.previewFhirReport });
+  const { t } = useI18n();
+  const preview = useMutation({
+    mutationFn: real.previewFhirReport,
+    retry: (attempt, error) => attempt < 2 && error.message === "409",
+  });
+  const saved = useQuery({
+    queryKey: ["fhir-import"], queryFn: real.personalFhirImport,
+    refetchInterval: (query) => preview.isPending || query.state.data?.state === "missing" ? false : 5_000,
+  });
+  const confirm = useMutation({
+    mutationFn: real.confirmFhirImport,
+    onSuccess: () => { preview.reset(); saved.refetch(); },
+  });
   const report = preview.data;
   return <section className="card space-y-3" aria-labelledby="fhir-preview-heading">
     <h2 id="fhir-preview-heading" className="text-lg font-semibold">{t("fhirPreview.title")}</h2>
     <p>{t("fhirPreview.description")}</p>
-    <button className="btn-quiet" disabled={preview.isPending} onClick={() => preview.mutate()}>
+    <button className="btn-quiet" disabled={saved.isFetching || preview.isPending || confirm.isPending} onClick={() => {
+      confirm.reset();
+      preview.mutate();
+    }}>
       {t(preview.isPending ? "loading" : "fhirPreview.load")}
     </button>
-    {preview.isError && <p role="alert">{t("fhirPreview.error")}</p>}
+    {(preview.isError || saved.isError) && <p role="alert">{t("fhirPreview.error")}</p>}
+    {confirm.isError && <p role="alert">{t("fhirPreview.confirmError")}</p>}
+    {saved.isSuccess && saved.data.state !== "missing" && <div className="space-y-2">
+      <p aria-live="polite">{t(`fhirImport.${saved.data.state}`)}</p>
+      {!report && saved.data.report && <FhirFindings report={saved.data.report} />}
+    </div>}
     {report && <div className="space-y-2">
-      <p role="status">{t(`fhirPreview.${report.state}`)}</p>
-      {report.issued_at && <p>{t("labSandbox.revision")} {report.version} · <time dateTime={report.issued_at}>
-        {new Date(report.issued_at).toLocaleString(lang)}
-      </time></p>}
-      {!!report.findings.length && <ul>{report.findings.map((finding) => <li className="row" key={finding.source_id}>
-        <div>
-          <span>{conditionLabel(finding.condition_id, lang)}</span>
-          <small className="block text-muted break-all">{finding.source_id}</small>
-        </div>
-        <StatusChip status={finding.status} />
-      </li>)}</ul>}
+      <p role="status">{t(report.unmapped ? "fhirPreview.unmapped" : `fhirPreview.${report.state}`)}</p>
+      <FhirFindings report={report} />
+      {report.snapshot_id && <button className="btn" disabled={confirm.isPending}
+        onClick={() => confirm.mutate(report.snapshot_id!)}>{t("fhirPreview.confirm")}</button>}
     </div>}
   </section>;
 }

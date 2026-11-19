@@ -47,7 +47,7 @@ from services.consent.policy import (
 )
 from services.consent.roles import PERSONAS
 from services.consent.settings import settings
-from services.lifecycle.store import LcSample, LifecycleBase, SandboxReport
+from services.lifecycle.store import FhirImport, LcSample, LifecycleBase, SandboxReport
 
 from . import fhir_preview, lab_feed, lifecycle_routes, pilot_routes
 from .auth import Identity, issue_token, secret, verify_token
@@ -309,6 +309,7 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
         subject = identity.actor.id
         await adapter.delete_person(subject, db)
         db.execute(delete(SandboxReport).where(SandboxReport.subject_id == subject))
+        db.execute(delete(FhirImport).where(FhirImport.subject_id == subject))
         db.execute(delete(LcSample).where(LcSample.owner.in_([subject, "signed-lab:" + subject])))
         couples = select(Couple.id).where(
             or_(Couple.person_a == subject, Couple.person_b == subject)
@@ -769,7 +770,7 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
     if signed_feed:
         lab_feed.register(app, db_session, limit)
     if demo and (fhir_url := os.environ.get(fhir_preview.BASE_ENV)):
-        fhir_preview.register(app, base_url=fhir_url, db_session=db_session, roles=roles, own=own, limit=limit)
+        fhir_preview.register(app, base_url=fhir_url, db_session=db_session, roles=roles, own=own, check=check, limit=limit)
     return app
 
 

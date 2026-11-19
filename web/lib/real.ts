@@ -41,13 +41,19 @@ export type SandboxReport = {
   findings: Record<string, Result["status"] | "not_tested">;
 };
 
-type FhirPreview = {
+export type FhirPreview = {
   state: "ready" | "requires_review" | "missing" | "unavailable";
   version?: string;
   issued_at?: string;
-  findings: { condition_id: string; status: "carrier" | "not_detected"; source_id: string }[];
+  snapshot_id?: string;
+  unmapped?: boolean;
+  findings: { condition_id: string; status: "carrier" | "not_detected" | "uncertain"; source_id: string }[];
 };
 
+type FhirImportState = {
+  state: "missing" | "pending" | "released" | "stale" | "sharing_ended";
+  report: FhirPreview | null;
+};
 async function grant(grantee: string, rtype: string, rid: string, scope: string, fields: string[], purpose: string) {
   return json("/api/me/consents", post({ grantee_id: grantee, resource_type: rtype, resource_id: rid, scope, fields, purpose,
     expires_at: Date.now() / 1000 + 3000, text_shown: "Fictional consent text" }));
@@ -55,6 +61,21 @@ async function grant(grantee: string, rtype: string, rid: string, scope: string,
 
 export const real = {
   previewFhirReport: () => json<FhirPreview>("/api/me/imports/fhir/preview", post({})),
+  personalFhirImport: () => json<FhirImportState>("/api/me/imports/fhir"),
+  async confirmFhirImport(snapshot_id: string) {
+    const response = await raw("/api/me/imports/fhir/confirm", post({ snapshot_id }));
+    if (!response.ok) throw new Error(String(response.status));
+  },
+  async reviewFhirImport(subject: SandboxSubject) {
+    const response = await raw(`/api/counsellor/fhir-imports/${subject}`);
+    if (response.status === 403) return null;
+    if (!response.ok) throw new Error(String(response.status));
+    return response.json() as Promise<FhirImportState & { snapshot_id: string; can_approve: boolean }>;
+  },
+  async approveFhirImport(subject: SandboxSubject, snapshot_id: string) {
+    const response = await raw(`/api/counsellor/fhir-imports/${subject}/approve`, post({ snapshot_id }));
+    if (!response.ok) throw new Error(String(response.status));
+  },
   personalLabReport: () => json<{ state: "missing" | "pending" | "withdrawn" | "released"; revision: number | null; report: SandboxReport | null }>("/api/me/sandbox-report"),
   shareLabReport: () => json("/api/me/sandbox-report/share", post({})),
   async reviewLabReport(subject: SandboxSubject) {

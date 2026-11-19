@@ -75,7 +75,14 @@ Use `python -m scripts.export_fhir_bundles --out tmp/fhir-seed` for offline JSON
 
 ### Preview the assigned synthetic health record
 
-Set `KINSIGHT_FHIR_SANDBOX_URL=http://127.0.0.1:8088/fhir` on the demo API and `NEXT_PUBLIC_FHIR_SANDBOX=1` on the HTTP-backed web build. For Compose, use `http://fhir:8080/fhir` inside the API container and set `NEXT_PUBLIC_MOCK=0` in `.env` before rebuilding. Select a supported demo person, then use **Health record preview** on **My result**. The server maps the signed-in persona to its fixture and runs the owner policy before querying HAPI. Use **Load latest report** to fetch an updated revision after the seed correction. The preview displays the issued time and observation IDs. Uncertain findings stay hidden and unrecognized targets suppress the finding list. The preview neither saves a result nor changes the couple assessment. SMART authorization, a durable confirmation flow, and a counsellor review queue remain part of [#28](https://github.com/loktrishal-05/kinsight/issues/28). [SMART App Launch](https://hl7.org/fhir/smart-app-launch/app-launch.html)
+Set `KINSIGHT_FHIR_SANDBOX_URL=http://127.0.0.1:8088/fhir` on the demo API and `NEXT_PUBLIC_FHIR_SANDBOX=1` on the HTTP-backed web build. For Compose, use `http://fhir:8080/fhir` inside the API container and set `NEXT_PUBLIC_MOCK=0` in `.env` before rebuilding.
+
+1. As Person A, open **My result** and select **Load latest report** under **Health record preview**. The server maps the demo account to its own fixture. The preview shows the issued time and observation IDs. Uncertain findings wait for review, and an unrecognized target suppresses the finding list.
+2. Select **Save and share this version with the demo counsellor for one hour**. A confirmed copy survives an API restart. The owner can revoke the grant from **Consents**.
+3. As the demo counsellor, open **Review a synthetic health record**, choose Person A and select **Open shared report**. A mapped report can be approved. An unmapped report stays in review. A participant's saved findings appear after approval.
+4. Send the seed correction. The app withholds the old result once it detects the change and requires confirmation and review for the new copy. Source checks cover the report version and its linked findings. If the source is unavailable, the app withholds the saved findings until it can verify them again.
+
+The confirmed synthetic import is separate from the illustrative couple assessment. SMART authorization, approved patient identity mapping and hosted acceptance remain part of [#28](https://github.com/loktrishal-05/kinsight/issues/28). [SMART App Launch](https://hl7.org/fhir/smart-app-launch/app-launch.html)
 
 ## Compare existing lab reports
 

@@ -29,6 +29,15 @@ class SandboxReport(LifecycleBase):
     approved: Mapped[bool] = mapped_column(default=False)
 
 
+class FhirImport(LifecycleBase):
+    __tablename__ = "lc_fhir_import"
+    subject_id: Mapped[str] = mapped_column(String, primary_key=True)
+    snapshot_id: Mapped[str] = mapped_column(String(64))
+    payload: Mapped[str] = mapped_column(Text)
+    consent_id: Mapped[str] = mapped_column(String)
+    approved: Mapped[bool] = mapped_column(default=False)
+
+
 class LcPairing(LifecycleBase):
     __tablename__ = "lc_pairing"
     id: Mapped[str] = mapped_column(String, primary_key=True)

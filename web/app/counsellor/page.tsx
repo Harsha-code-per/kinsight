@@ -2,16 +2,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Pause, Pencil, Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import FhirFindings from "@/components/FhirFindings";
 import { Notice, PageHeader } from "@/components/ui";
 import { Journey, TierChip } from "@/components/visuals";
-import { api } from "@/lib/api";
+import { api, FHIR_SANDBOX } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { real, type SandboxSubject } from "@/lib/real";
+import { useSession } from "@/lib/session";
 
 const STATES = ["counselling_done", "confirmatory_requested", "confirmatory_done", "specialist_referral_requested", "specialist_referral_done", "closed"];
 const STATUSES = ["awaiting_counsellor", "released", "awaiting_user", "tracking", "closed"];
 
 export default function Counsellor() {
   const { t, td } = useI18n();
+  const { persona } = useSession();
   const qc = useQueryClient();
   const [sel, setSel] = useState("demo-case");
   const [evidence, setEvidence] = useState("");
@@ -41,6 +45,7 @@ export default function Counsellor() {
   return (
     <section className="space-y-6">
       <PageHeader title={t("counsellor.title")} lead={t("counsellor.lead")} />
+      {FHIR_SANDBOX && persona === "counsellor" && <FhirReview />}
       <dl data-demo="workload" className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label={t("counsellor.workload")}>
         {[[t("counsellor.open"), count((r) => r.status !== "closed")], [t("tier.3"), count((r) => r.tier === 3 && r.status !== "closed")],
           [t("counsellor.waiting"), count((r) => r.status === "awaiting_counsellor")], [t("next.overdue"), count((r) => (r.due_days ?? 0) < 0 && r.status !== "closed")]].map(([k, v]) => (
@@ -120,4 +125,50 @@ export default function Counsellor() {
       )}
     </section>
   );
+}
+
+function FhirReview() {
+  const { t } = useI18n();
+  const [subject, setSubject] = useState<SandboxSubject>("synthetic-a");
+  const [selected, setSelected] = useState<SandboxSubject | null>(null);
+  const review = useQuery({
+    queryKey: ["fhir-review", selected], enabled: selected !== null,
+    queryFn: () => real.reviewFhirImport(selected!), refetchInterval: 5_000, retry: false,
+  });
+  const approve = useMutation({
+    mutationFn: ({ patient, snapshot }: { patient: SandboxSubject; snapshot: string }) =>
+      real.approveFhirImport(patient, snapshot),
+    onSettled: () => review.refetch(),
+  });
+  const record = review.isSuccess ? review.data : null;
+  return <section className="card space-y-3" aria-labelledby="fhir-review-heading">
+    <h2 id="fhir-review-heading" className="text-lg font-semibold">{t("fhirImport.review")}</h2>
+    <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => {
+      event.preventDefault();
+      approve.reset();
+      if (selected === subject) review.refetch();
+      else setSelected(subject);
+    }}>
+      <label>
+        {t("labSandbox.participant")}
+        <select className="field mt-1" value={subject} onChange={(event) => {
+          setSelected(null);
+          setSubject(event.target.value === "synthetic-a" ? "synthetic-a" : "synthetic-b");
+        }}>
+          <option value="synthetic-a">{t("persona.person_a")}</option>
+          <option value="synthetic-b">{t("persona.person_b")}</option>
+        </select>
+      </label>
+      <button className="btn-quiet" disabled={approve.isPending}>{t("fhirImport.open")}</button>
+    </form>
+    {(review.isError || approve.isError) && <p role="alert">{t("fhirPreview.error")}</p>}
+    {review.isSuccess && review.data === null && <p role="status">{t("labSandbox.noConsent")}</p>}
+    {record && <>
+      <p role="status">{t(`fhirImport.${record.state}`)}</p>
+      {record.report && <FhirFindings report={record.report} />}
+      {record.state === "pending" && !record.can_approve && <p>{t("fhirImport.blocked")}</p>}
+      {record.can_approve && selected && <button className="btn" disabled={approve.isPending}
+        onClick={() => approve.mutate({ patient: selected, snapshot: record.snapshot_id })}>{t("labSandbox.approve")}</button>}
+    </>}
+  </section>;
 }
