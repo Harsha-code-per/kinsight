@@ -93,6 +93,7 @@ def register(app, *, db_session, roles, check, own, limit, signed_feed=False):
     def intake(body: SandboxIntake, identity=Depends(roles("demo_operator")), db: Session = Depends(db_session)):
         if signed_feed:
             raise HTTPException(403, "Use the signed lab feed")
+        check(db, identity, ResourceRef("demo", "sandbox-intake"), {"status"})
         limit(db, identity)
         record_intake(db, body, identity.actor)
         db.commit()

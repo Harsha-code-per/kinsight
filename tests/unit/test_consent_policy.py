@@ -1,7 +1,7 @@
 import time
 
 import pytest
-from hypothesis import given, settings
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -70,42 +70,63 @@ def test_scope_purpose_expiry_owner_first_and_revocation(db):
 
 
 @settings(max_examples=40, deadline=None)
+@example(
+    requested={"status", "panel_version"}, granted={"status"}, matching_condition=True,
+    active=True, unknown_field=False, role="counsellor", grant_matches_actor=True,
+    owner_viewed=True, assigned=True,
+)
 @given(
     requested=st.sets(st.sampled_from(["status", "panel_version", "condition_id"])),
     granted=st.sets(st.sampled_from(["status", "panel_version"])),
     matching_condition=st.booleans(),
     active=st.booleans(),
     unknown_field=st.booleans(),
+    role=st.sampled_from(["relative", "partner", "counsellor", "analyst"]),
+    grant_matches_actor=st.booleans(),
+    owner_viewed=st.booleans(),
+    assigned=st.booleans(),
 )
-def test_family_projection_and_revocation(requested, granted, matching_condition, active, unknown_field):
+def test_family_projection_and_revocation(
+    requested, granted, matching_condition, active, unknown_field, role, grant_matches_actor, owner_viewed, assigned,
+):
     engine = create_engine("sqlite://")
+    purpose = "counselling" if role == "counsellor" else "family_notification"
     try:
         Base.metadata.create_all(engine)
         with Session(engine) as session:
             consent = Consent(
                 grantor_id="a",
-                grantee_id="b",
+                grantee_id="b" if grant_matches_actor else "unrelated",
                 resource_type="result",
                 resource_id="r",
                 scope="condition_findings",
                 fields=sorted(granted),
                 condition_ids=["COND_001"],
-                purpose="family_notification",
+                purpose=purpose,
                 expires_at=time.time() + (60 if active else -1),
                 text_shown_hash="a" * 64,
             )
             session.add(consent)
             session.flush()
-            actor = Actor("b", "relative")
-            resource = ResourceRef("result", "r", "a", "COND_001" if matching_condition else "COND_002", True)
+            actor = Actor("b", role)
+            resource = ResourceRef(
+                "result", "r", "a", "COND_001" if matching_condition else "COND_002",
+                owner_viewed=owner_viewed, assigned_to="b" if assigned else None,
+                assignment_expires_at=time.time() + 60, assignment_reason="case-review",
+            )
             fields = requested | {"private"} if unknown_field else requested
-            decision = decide(actor, resource, "family_notification", fields, session=session, audit_salt=SALT)
-            permitted = requested & granted if active and matching_condition and not unknown_field else set()
+            decision = decide(actor, resource, purpose, fields, session=session, audit_salt=SALT)
+            permitted = set()
+            if (
+                active and matching_condition and not unknown_field and grant_matches_actor and owner_viewed
+                and (role in {"relative", "partner"} or (role == "counsellor" and assigned))
+            ):
+                permitted = requested & granted
             assert decision.allowed_fields == permitted
             assert decision.allowed is bool(permitted)
             consent.revoked_at = time.time()
             session.flush()
-            revoked = decide(actor, resource, "family_notification", fields, session=session, audit_salt=SALT)
+            revoked = decide(actor, resource, purpose, fields, session=session, audit_salt=SALT)
             assert not revoked.allowed and not revoked.allowed_fields
             assert len(session.scalars(select(AuditEvent)).all()) == 2
             assert verify_chain(session)

@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy.orm import Session
 
 from services.consent import sharing
+from services.consent.policy import ResourceRef
 from services.lifecycle import (
     booking,
     cfg,
@@ -173,7 +174,12 @@ class Booking(LifecycleBody):
     slot_at: int = Field(ge=0, le=cfg()["booking"]["max_slot_timestamp"])
 
 
-def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
+def register(app, roles, db_session, limit, *, own, check, signed_feed=False) -> None:
+    def lifecycle_access(db, identity):
+        if identity.actor.role == "person":
+            own(db, identity, "lifecycle", {"status"})
+        else:
+            check(db, identity, ResourceRef("demo", "lifecycle"), {"status"})
     def tokens(db: Session) -> CascadeTokens:  # secret read at request time; single-use nonces live in the database
         t = CascadeTokens(secret("KINSIGHT_TOKEN_SECRET"))
         t.used = store.UsedNonces(db)
@@ -234,6 +240,7 @@ def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
 
     @app.post("/api/lifecycle/booking")
     async def book(body: Booking, identity=Depends(roles("person")), db: Session = Depends(db_session)):
+        lifecycle_access(db, identity)
         limit(db, identity)
         row = store.booking_active(db, identity.actor.id)
         if row is not None:
@@ -251,6 +258,7 @@ def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
 
     @app.post("/api/lifecycle/booking/{id}/cancel")
     async def cancel_booking(id: Identifier, identity=Depends(roles("person")), db: Session = Depends(db_session)):
+        lifecycle_access(db, identity)
         limit(db, identity)
         row = store.booking_cancel(db, identity.actor.id, id)
         audit(db, identity, row.id, "booking_cancelled")
@@ -310,6 +318,7 @@ def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
 
     @app.put("/api/lifecycle/safe-vault")
     async def safe_vault(body: SafeVault, identity=Depends(roles("person")), db: Session = Depends(db_session)):
+        lifecycle_access(db, identity)
         limit(db, identity)
         hashes = safety.hash_pin(body.pin), safety.hash_pin(body.decoy_pin)
         audit(db, identity, "safe-vault", "safe_vault_configured")
@@ -318,6 +327,7 @@ def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
 
     @app.post("/api/lifecycle/safe-vault/unlock")
     async def vault_unlock(body: VaultPin, identity=Depends(roles("person")), db: Session = Depends(db_session)):
+        lifecycle_access(db, identity)
         limit(db, identity)
         actor = identity.actor.id
         vault = store.vault_get(db, actor)
@@ -356,12 +366,14 @@ def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
             row = store.lab_sample(db, subject)
             sample = tracking.Sample(row.barcode, row.stage, {int(k): v for k, v in json.loads(row.times).items()})
             return {**tracker_view(sample), "source": "signed_lab", "is_synthetic": True}
+        lifecycle_access(db, identity)
         return {**tracker_view(sample_of(db, identity)), "is_synthetic": True}
 
     @app.post("/api/lifecycle/tracker/advance")
     async def tracker_advance(identity=Depends(roles(*PERSON)), db: Session = Depends(db_session)):
         if signed_feed:
             raise HTTPException(403, "Use the signed lab feed")
+        lifecycle_access(db, identity)
         s = sample_of(db, identity)
         if s.qc_failure or s.stage >= len(cfg()["lab_stages"]):
             raise HTTPException(409, "Nothing to advance")
@@ -373,6 +385,7 @@ def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
     @app.get("/api/lifecycle/certificate")
     async def certificate(elapsed_days: int = 30, identity=Depends(roles(*PERSON)),
                           db: Session = Depends(db_session)):
+        lifecycle_access(db, identity)
         elapsed = max(0, min(elapsed_days, 365))
         try:
             state = await app.state.backend.invoke("teach_back_status", identity.actor.id, None, db)
@@ -384,6 +397,7 @@ def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
 
     @app.post("/api/lifecycle/pairing", status_code=201)
     async def pairing_start(identity=Depends(roles("person")), db: Session = Depends(db_session)):
+        lifecycle_access(db, identity)
         limit(db, identity)
         row = store.pairing_initiate(db, identity.actor.id, time.time())  # PermissionError -> 403
         audit(db, identity, row.id, "pairing_started")
@@ -391,6 +405,7 @@ def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
 
     @app.post("/api/lifecycle/pairing/{id}/confirm")
     async def pairing_confirm(id: str, body: Pin, identity=Depends(roles("person")), db: Session = Depends(db_session)):
+        lifecycle_access(db, identity)
         limit(db, identity)
         row = store.pairing_confirm(db, id, body.pin, identity.actor.id, time.time())
         audit(db, identity, row.id, "pairing_confirmed")
@@ -398,19 +413,22 @@ def register(app, roles, db_session, limit, *, own, signed_feed=False) -> None:
 
     @app.post("/api/lifecycle/pairing/{id}/revoke")
     async def pairing_revoke(id: str, identity=Depends(roles("person")), db: Session = Depends(db_session)):
+        lifecycle_access(db, identity)
         row = store.pairing_revoke(db, id, identity.actor.id)
         audit(db, identity, row.id, "pairing_revoked")
         return {"status": row.status, "is_synthetic": True}
 
     @app.get("/api/lifecycle/pairing/{id}")
     async def pairing_status(id: str, identity=Depends(roles("person")), db: Session = Depends(db_session)):
+        lifecycle_access(db, identity)
         row = store.pairing_get(db, id, identity.actor.id, time.time())
         if row is None:
             raise HTTPException(403, "Access unavailable")
         return {"status": row.status, "is_synthetic": True}
 
     @app.get("/api/lifecycle/receipt")
-    async def receipt(identity=Depends(roles(*PERSON))):
+    async def receipt(identity=Depends(roles(*PERSON)), db: Session = Depends(db_session)):
+        lifecycle_access(db, identity)
         # Package-level lines only. The partner's lines are never returned; the other person's share is not computed here.
         mine = identity.actor.id.endswith("b")
         lines = [ledger.line(2650, 80 if mine else 100, 265 if mine else 0), ledger.line(450, 100, 0)]

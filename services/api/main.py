@@ -758,7 +758,7 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
         return endpoint
 
     if enabled("lifecycle"):
-        lifecycle_routes.register(app, roles, db_session, limit, own=own, signed_feed=signed_feed)
+        lifecycle_routes.register(app, roles, db_session, limit, own=own, check=check, signed_feed=signed_feed)
 
     for operation in ("reset", "load-cohort"):
         app.add_api_route(
