@@ -368,6 +368,8 @@ flowchart LR
 
 ## Seven languages
 
+The shipped language list lives in `web/messages/languages.json`. Run `python -m scripts.sync_language_badge` after changing the list to regenerate the README badge.
+
 **English · العربية · हिन्दी · தமிழ் · తెలుగు · ಕನ್ನಡ · മലയാളം**, chosen from the language menu in the top bar. Everything
 follows the choice:
 

@@ -32,7 +32,7 @@ test("demo entry works with reduced motion and in Arabic", async ({ page }) => {
 
 test("a retired language preference returns to the shipped language menu", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("ks_lang", "ur"));
-  await page.goto("/signin");
+  await page.goto("/home");
   await expect.poll(() => page.evaluate(() => localStorage.getItem("ks_lang"))).toBe("en");
   const languagesMenu = page.getByTestId("language-select").first();
   await expect(languagesMenu).toHaveValue("en");
