@@ -49,7 +49,7 @@ from services.consent.roles import PERSONAS
 from services.consent.settings import settings
 from services.lifecycle.store import LcSample, LifecycleBase, SandboxReport
 
-from . import lab_feed, lifecycle_routes, pilot_routes
+from . import fhir_preview, lab_feed, lifecycle_routes, pilot_routes
 from .auth import Identity, issue_token, secret, verify_token
 from .backend import DemoBackend
 from .interfaces import Backend, Unavailable, UnwiredBackend
@@ -672,7 +672,10 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
         check(db, identity, ResourceRef("audit", "chain"), {"events"})
         if tamper and not demo:
             raise HTTPException(403, "Demo unavailable")
-        return {"valid": verify_tamper_example() if tamper else verify_chain(db), "is_synthetic": True}
+        if tamper:
+            broken = verify_tamper_example()
+            return {"valid": broken is None, "broken_entry": broken, "is_synthetic": True}
+        return {"valid": verify_chain(db), "is_synthetic": True}
 
     @app.get("/api/governance/policy")
     async def policy(identity=Depends(roles("auditor")), db: Session = Depends(db_session)):
@@ -765,6 +768,8 @@ def create_app(database_url: str | None = None, backend: Backend | None = None) 
         pilot_routes.register(app, db_session=db_session, roles=roles, check=check, own=own, limit=limit, signed_feed=signed_feed)
     if signed_feed:
         lab_feed.register(app, db_session, limit)
+    if demo and (fhir_url := os.environ.get(fhir_preview.BASE_ENV)):
+        fhir_preview.register(app, base_url=fhir_url, db_session=db_session, roles=roles, own=own, limit=limit)
     return app
 
 

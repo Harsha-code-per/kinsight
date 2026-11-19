@@ -65,7 +65,7 @@ def verify_chain(session: Session, expected_head: str | None = None) -> bool:
     return expected_head is None or previous == expected_head
 
 
-def verify_tamper_example() -> bool:
+def verify_tamper_example() -> int | None:
     """Verify a deliberately altered fixture in a disposable database."""
     engine = create_engine("sqlite://")
     try:
@@ -76,6 +76,6 @@ def verify_tamper_example() -> bool:
                 resource_ref="synthetic-result", decision="deny", reason_code="default_deny",
             )
             event.reason_code = "tampered"
-            return verify_chain(session)
+            return None if verify_chain(session) else event.id
     finally:
         engine.dispose()

@@ -1,14 +1,13 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
-import { useState } from "react";
 import { Notice, PageHeader } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
 export default function Governance() {
   const { t } = useI18n();
-  const [valid, setValid] = useState<boolean | null>(null);
+  const verification = useMutation({ mutationFn: api.auditVerify });
   const policy = useQuery({ queryKey: ["policy"], queryFn: api.policy });
   const sources = useQuery({ queryKey: ["sources"], queryFn: api.sources });
   return (
@@ -17,14 +16,16 @@ export default function Governance() {
       <Notice>{t("gov.intended")}</Notice>
       <div className="card space-y-3">
         <div className="flex flex-wrap gap-2">
-          <button className="btn" data-demo="verify" onClick={async () => setValid((await api.auditVerify(false)).valid)}><ShieldCheck aria-hidden className="h-4 w-4" />{t("gov.verify")}</button>
-          <button className="btn-quiet" data-demo="tamper" onClick={async () => setValid((await api.auditVerify(true)).valid)}><ShieldAlert aria-hidden className="h-4 w-4" />{t("gov.tamper")}</button>
+          <button className="btn" data-demo="verify" disabled={verification.isPending} onClick={() => verification.mutate(false)}><ShieldCheck aria-hidden className="h-4 w-4" />{t("gov.verify")}</button>
+          <button className="btn-quiet" data-demo="tamper" disabled={verification.isPending} onClick={() => verification.mutate(true)}><ShieldAlert aria-hidden className="h-4 w-4" />{t("gov.tamper")}</button>
         </div>
-        {valid !== null && (
-          <p role="status" data-testid="chain" data-valid={valid} className={`chip text-sm ${valid ? "bg-brand-50 text-brand-800" : "bg-unsure-bg text-unsure-fg"}`}>
-            {valid ? "Chain valid" : "Chain broken: tampering detected"}
+        {verification.isError && <p role="alert">{t("gov.verifyError")}</p>}
+        {verification.data && <div role="status" className="space-y-2">
+          <p data-testid="chain" data-valid={verification.data.valid} className={`chip text-sm ${verification.data.valid ? "bg-brand-50 text-brand-800" : "bg-unsure-bg text-unsure-fg"}`}>
+            {t(verification.data.valid ? "gov.chainValid" : "gov.chainBroken")}
           </p>
-        )}
+          {verification.data.broken_entry && <p>{t("gov.brokenEntry").replace("{entry}", String(verification.data.broken_entry))}</p>}
+        </div>}
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         <div className="card">

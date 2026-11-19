@@ -23,6 +23,8 @@ Referral states: `result_released → counselling_requested → counselling_done
 ## Data
 The generator (`services/cohort/generate.py`) builds families from a seed, writes persons/relationships/screening/couples (+ `sim_truth` in a separate folder for evaluation only) and a manifest with hashes. `make cohort` rebuilds `data/demo/`.
 
+The optional FHIR preview maps the signed-in demo persona to its HAPI fixture on the API server. The owner policy writes the audit decision before the API reads the Patient and DiagnosticReport with its linked Observations. The reader checks resource ownership and synthetic tags, and the result page displays verified findings with their source IDs. Findings needing review stay outside the couple engine. [FHIR preview setup](REAL_DATA_ROLLOUT.md#preview-the-assigned-synthetic-health-record)
+
 ## Deployment
 Docker Compose (Postgres, Redis, API, web). Containers have no hard dependency on a foreign region; real health data would need in-region hosting and an approved model endpoint. Scheduler for timers is a small worker calling the API (not sleeping in graph nodes).
 

@@ -251,7 +251,7 @@ export const mock = {
   async comprehension() { return DATA.comprehension; },
   async capacity() { return DATA.capacity; },
   async insights() { return DATA; },
-  async auditVerify(tamper: boolean) { return { valid: !tamper }; },
+  async auditVerify(tamper: boolean) { return { valid: !tamper, broken_entry: tamper ? 1 : null }; },
   async policy() { return { rules: ["Default deny", "Consent required for every read", "No export route", "No employment, insurance or commercial purpose"] }; },
   async sources() { return [{ source: "Synthetic cohort", licence: "Project", kind: "synthetic" }, { source: "configs/panel.yaml", licence: "Project", kind: "synthetic" }]; },
   async accessLog() {

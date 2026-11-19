@@ -38,4 +38,4 @@ def test_chain_tamper_and_external_head():
 
 
 def test_disposable_tamper_example_detects_a_changed_event():
-    assert not verify_tamper_example()
+    assert verify_tamper_example() == 1

@@ -9,6 +9,7 @@ import type { z as Zod } from "zod";
 
 export const MOCK = process.env.NEXT_PUBLIC_MOCK !== "0";
 export const LAB_SANDBOX = !MOCK && process.env.NEXT_PUBLIC_LAB_SANDBOX === "1";
+export const FHIR_SANDBOX = !MOCK && process.env.NEXT_PUBLIC_FHIR_SANDBOX === "1";
 
 const Fictional = z.object({ is_synthetic: z.literal(true).optional() });
 export const ResultS = Fictional.extend({ condition_id: z.string(), status: z.enum(["carrier", "not_detected", "uncertain"]), label: z.string().optional(), label_ar: z.string().optional() });
@@ -106,7 +107,7 @@ export const api = {
   dashboard: (): Promise<{ cells: Record<string, number | null>; budget_remaining: number }> => impl.dashboard(),
   comprehension: (): Promise<any> => impl.comprehension(),
   capacity: (): Promise<any> => impl.capacity(),
-  auditVerify: (tamper = false): Promise<{ valid: boolean }> => impl.auditVerify(tamper),
+  auditVerify: (tamper = false): Promise<{ valid: boolean; broken_entry?: number | null }> => impl.auditVerify(tamper),
   policy: (): Promise<any> => impl.policy(),
   sources: (): Promise<any> => impl.sources(),
   // Scenario picker, insight charts and the access trail are generated from the committed demo cohort in both modes.

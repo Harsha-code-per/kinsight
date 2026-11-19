@@ -2,16 +2,18 @@
 
 ## Resume here
 
-Start from the latest `origin/main` and check the latest `ci` workflow run. Check open issue descriptions again for new decisions or ownership. Start with **#28**, the EHR import. Use the local HAPI fixture for report and Observation mapping, including a correction, an unknown target, and mismatched subject references. Resolve the patient assignment server-side and verify consent and audit before exposing a review screen. Hosted acceptance requires a designated test server and SMART sandbox credentials. [Open issues](https://github.com/loktrishal-05/kinsight/issues) · [Latest CI](https://github.com/loktrishal-05/kinsight/actions/workflows/ci.yml)
+Start from the latest `origin/main` and check the latest `ci` workflow run. Check open issue descriptions again for new decisions or ownership. Continue **#28**, the EHR import. Extend the local, account-scoped preview with a durable confirmation and counsellor review workflow. Hosted acceptance requires a designated test server and SMART sandbox credentials. [Open issues](https://github.com/loktrishal-05/kinsight/issues) · [Latest CI](https://github.com/loktrishal-05/kinsight/actions/workflows/ci.yml)
 
 ## Work shipped so far
 
 | Issues | Evidence on main | Remaining acceptance |
 | --- | --- | --- |
-| #32 | Reproducible transactions for two synthetic couples, a local Docker HAPI R4 sandbox, and a version-checked correction. The live test checks that subject-filtered searches return their respective records. | An approved hosted sandbox and application-side authorization through #28. |
+| #32 (closed) | Reproducible transactions for two synthetic couples, a local Docker HAPI R4 sandbox, and a version-checked correction. The live test checks that subject-filtered searches return their respective records. | Hosted deployment and SMART integration are tracked under #28. |
+| #28 | Opt-in local HAPI preview with server-side demo account mapping, verified observations, and source IDs. Corrections update the preview and uncertain findings stay hidden. | SMART patient context, persisted import confirmation, assigned counsellor review, and hosted browser acceptance. |
 | #30 | Signed synthetic lab events drive the Journey tracker. Consent and counsellor approval control release per revision. A corrected report returns to review. | HL7 v2 ORU ingestion, hosted delivery and provider verification. |
 | #31, #33 | Browser-local attachment and review, two verified PDF layouts, a filterable comparison chart, guided questions and MedlinePlus links. | Photo OCR, wider report layouts, more verified examples, and the other public reference integrations. |
-| #42, #43 | Tests exercise optional lab-route authentication, field projection, revocation, audit integrity and live audit tamper detection. | Inventory every API route and verify the policy or explicit exception for each one. Recheck the hosted tamper exercise before closing #43. |
+| #42, #43 | Tests exercise optional lab-route authentication, field projection, revocation, audit integrity and live audit tamper detection. The synthetic audit example reports the broken entry while leaving the real audit chain untouched. | Inventory every API route and verify the policy or explicit exception for each one. Verify the broken entry on the deployed UI before closing #43. |
+| #56 | The language menu ships seven packs, the README badge is checked against the manifest, and Kin tests cover all seven languages, including mixed scripts. | Independent review of translated wording is tracked in #45. |
 | #58, #61, #62 | Corrected the report wording that broke CI, upgraded Next.js and React dependencies in earlier work, and removed outdated README badges. | Recheck release and CI evidence and finish the audit gates and documentation audit. |
 
 The issue tracker remains open. Reproduce each acceptance criterion before calling the corresponding issue complete.

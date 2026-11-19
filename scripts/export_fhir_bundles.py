@@ -8,13 +8,12 @@ from pathlib import Path
 import httpx
 from fhir.resources.R4B.bundle import Bundle
 
+from services.cohort.fhir import FINDINGS, SYSTEM, TAG
+
 COHORT = Path(__file__).resolve().parents[1] / "data" / "demo"
-SYSTEM = "https://kinsight.example/fhir"
-TAG = {"system": "https://kinsight.example/tags", "code": "synthetic"}
 INITIAL_ISSUED = "2026-01-01T10:00:00Z"
 CORRECTED_ISSUED = "2026-01-02T10:00:00Z"
 MEDIA = "application/fhir+json"
-FINDINGS = {"carrier": "LA9633-4", "not_detected": "LA9634-2", "uncertain": "LA11884-6"}
 
 
 def cohort_rows(name):

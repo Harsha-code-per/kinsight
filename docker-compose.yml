@@ -19,7 +19,12 @@ services:
     depends_on: [postgres, redis]
     ports: ["8000:8000"]
   web:
-    build: { context: web, args: { NEXT_PUBLIC_MOCK: "${NEXT_PUBLIC_MOCK:-1}" } }
+    build:
+      context: web
+      args:
+        NEXT_PUBLIC_MOCK: "${NEXT_PUBLIC_MOCK:-1}"
+        NEXT_PUBLIC_FHIR_SANDBOX: "${NEXT_PUBLIC_FHIR_SANDBOX:-0}"
+        KINSIGHT_API_URL: "http://api:8000"
     environment: { KINSIGHT_API_URL: "http://api:8000" }
     depends_on: [api]
     ports: ["3000:3000"]

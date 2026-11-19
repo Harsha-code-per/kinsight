@@ -30,8 +30,10 @@ test("audit tamper example leaves the shared audit chain intact", async ({ page 
   await expect(chain).toHaveAttribute("data-valid", "true");
   await page.locator('[data-demo="tamper"]').click();
   await expect(chain).toContainText("Chain broken: tampering detected");
+  await expect(page.getByText("The synthetic tamper test found a broken link at entry 1.")).toBeVisible();
   await page.locator('[data-demo="verify"]').click();
   await expect(chain).toHaveAttribute("data-valid", "true");
+  await expect(page.getByText(/broken link at entry/)).toHaveCount(0);
 });
 
 test("family circle shows three generations with readable labels", async ({ page }) => {

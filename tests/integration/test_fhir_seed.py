@@ -4,6 +4,8 @@ import httpx
 import pytest
 
 from scripts.export_fhir_bundles import MEDIA, TAG, build_bundles, upload
+from services.api.fhir_preview import read_preview
+from services.cohort.panel import load_panel
 
 
 def test_transactions_are_reproducible_and_link_findings_to_the_right_patient():
@@ -49,6 +51,9 @@ def test_hapi_accepts_seed_and_keeps_the_report_identity_on_correction():
         upload(client, bundles)
         report_path = correction["entry"][-1]["request"]["url"]
         original = client.get(report_path).raise_for_status().json()
+        panel = load_panel()
+        preview = read_preview(client, original["id"], panel)
+        assert preview["version"] == original["meta"]["versionId"]
         patient = original["subject"]["reference"]
         unrelated = bundles[1][1]["entry"][0]["request"]["url"]
 
@@ -64,6 +69,10 @@ def test_hapi_accepts_seed_and_keeps_the_report_identity_on_correction():
         assert revised["status"] == "corrected"
         assert revised["id"] == original["id"]
         assert revised["meta"]["versionId"] != original["meta"]["versionId"]
+        corrected = read_preview(client, original["id"], panel)
+        assert corrected["version"] == revised["meta"]["versionId"]
+        assert corrected["state"] == "requires_review"
+        assert len(corrected["findings"]) == len(preview["findings"]) - 1
         assert revised["result"] == original["result"]
         history_path = f"{report_path}/_history/{original['meta']['versionId']}"
         assert client.get(history_path).raise_for_status().json()["status"] == "final"

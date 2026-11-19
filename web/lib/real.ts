@@ -41,12 +41,20 @@ export type SandboxReport = {
   findings: Record<string, Result["status"] | "not_tested">;
 };
 
+type FhirPreview = {
+  state: "ready" | "requires_review" | "missing" | "unavailable";
+  version?: string;
+  issued_at?: string;
+  findings: { condition_id: string; status: "carrier" | "not_detected"; source_id: string }[];
+};
+
 async function grant(grantee: string, rtype: string, rid: string, scope: string, fields: string[], purpose: string) {
   return json("/api/me/consents", post({ grantee_id: grantee, resource_type: rtype, resource_id: rid, scope, fields, purpose,
     expires_at: Date.now() / 1000 + 3000, text_shown: "Fictional consent text" }));
 }
 
 export const real = {
+  previewFhirReport: () => json<FhirPreview>("/api/me/imports/fhir/preview", post({})),
   personalLabReport: () => json<{ state: "missing" | "pending" | "withdrawn" | "released"; revision: number | null; report: SandboxReport | null }>("/api/me/sandbox-report"),
   shareLabReport: () => json("/api/me/sandbox-report/share", post({})),
   async reviewLabReport(subject: SandboxSubject) {
