@@ -1,0 +1,5 @@
+MSH|^~\&|KINSIGHTMOCK|SANDBOX|KINSIGHT|SANDBOX|20260101100000+0000||ORU^R01^ORU_R01|fixture-correction|T|2.5.1
+PID|1||synthetic-a^^^KINSIGHT^PI
+OBR|1||synthetic-a-report^KINSIGHT|KS-CARRIER^Synthetic carrier screen^L||||||||||||||||||20260101100000+0000|||C
+OBX|1|CE|COND_001^^L||UNCERTAIN^^L||||||C
+ZKS|2

@@ -14,7 +14,7 @@ test("a lab correction invalidates the open participant view until reviewed", as
     if (signedFeed) {
       await promisify(execFile)(process.env.PYTHON ?? "python", [
         "-m", "scripts.mock_lab", "--api", process.env.KINSIGHT_API_URL ?? "http://127.0.0.1:8000",
-        "--delay", "0", "--revision", String(revision), "--start-stage", revision === 1 ? "2" : "8",
+        "--format", "hl7", "--delay", "0", "--revision", String(revision), "--start-stage", revision === 1 ? "2" : "8",
       ], { cwd: resolve(".."), timeout: 20_000 });
       return;
     }

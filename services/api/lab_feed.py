@@ -4,6 +4,7 @@
 
 import hmac
 import json
+import logging
 import re
 import time
 from typing import Annotated, Literal
@@ -12,20 +13,25 @@ from fastapi import Depends, HTTPException, Request
 from pydantic import Field, TypeAdapter
 from sqlalchemy.orm import Session
 
+from services.cohort.fhir import FINDINGS, SYSTEM, TAG
 from services.consent import sharing
 from services.consent.audit import append_event
 from services.consent.policy import Actor, reference
 from services.lifecycle import cfg, store
 
 from .auth import Identity, secret
-from .pilot_routes import SandboxIntake, Subject, record_intake
+from .fhir_preview import code_from, require_resource
+from .hl7_lab import decode_event
+from .pilot_routes import Revision, SandboxIntake, Subject, record_intake
 from .schemas import StrictModel
 
 PATH = "/api/integrations/lab/events"
+HL7_PATH = "/api/integrations/lab/hl7"
 SIGNING_SECRET = "KINSIGHT_LAB_SIGNING_SECRET"
 LAB = Actor("synthetic-lab", "lab")
 MAX_BODY_SIZE = 16_384
 WINDOW = 300
+LOG = logging.getLogger(__name__)
 
 
 class StageEvent(StrictModel):
@@ -39,11 +45,57 @@ class ReportEvent(StrictModel):
     report: SandboxIntake
 
 
-EVENT = TypeAdapter(Annotated[StageEvent | ReportEvent, Field(discriminator="kind")])
+class BundleEvent(StrictModel):
+    kind: Literal["bundle"]
+    subject_id: Subject
+    revision: Revision
+    bundle: dict
 
 
-def signature(key: bytes, timestamp: str, delivery: str, body: bytes) -> str:
-    return hmac.digest(key, f"POST {PATH}\n{timestamp}\n{delivery}\n".encode() + body, "sha256").hex()
+EVENT = TypeAdapter(Annotated[StageEvent | ReportEvent | BundleEvent, Field(discriminator="kind")])
+
+
+def bundle_intake(event: BundleEvent) -> SandboxIntake:
+    subject = f"Patient/{event.subject_id}"
+    report_id = f"{event.subject_id}-report"
+    try:
+        bundle = event.bundle
+        if bundle.get("resourceType") != "Bundle" or bundle.get("type") != "collection":
+            raise ValueError("Expected a FHIR collection Bundle")
+        entries = bundle["entry"]
+        if not isinstance(entries, list) or not 1 <= len(entries) <= 3:
+            raise ValueError("Expected one report with up to two observations")
+        resources = [entry["resource"] for entry in entries]
+        reports = [resource for resource in resources if resource["resourceType"] == "DiagnosticReport"]
+        if len(reports) != 1:
+            raise ValueError("Expected exactly one DiagnosticReport")
+        report = reports[0].copy()
+        require_resource(report, "DiagnosticReport", report_id, subject)
+        refs = [item["reference"] for item in report.pop("result", [])]
+        observations = {f"Observation/{row['id']}": row for row in resources if row["resourceType"] == "Observation"}
+        if len(observations) != len(resources) - 1 or len(refs) != len(set(refs)) or set(refs) != observations.keys():
+            raise ValueError("The report must reference all and only its included Observations")
+        statuses = {code: status for status, code in FINDINGS.items()}
+        findings = {}
+        for ref in refs:
+            row = observations[ref]
+            match = re.fullmatch(r"Observation/([A-Za-z0-9.-]{1,64})", ref)
+            if match is None or row.get("status") not in {"preliminary", "final", "amended", "corrected"}:
+                raise ValueError("Expected a local Observation reference with a result status")
+            require_resource(row, "Observation", match[1], subject)
+            condition = code_from(row["code"], f"{SYSTEM}/condition")
+            status = statuses.get(code_from(row["valueCodeableConcept"], "http://loinc.org"))
+            if condition not in {"COND_001", "COND_002"} or condition in findings or status is None:
+                raise ValueError("Unknown or duplicate finding")
+            findings[condition] = status
+        report["meta"] = {"tag": [TAG]}
+    except (AttributeError, KeyError, TypeError) as exc:
+        raise ValueError("Invalid FHIR bundle") from exc
+    return SandboxIntake(subject_id=event.subject_id, revision=event.revision, resource=report, findings=findings)
+
+
+def signature(key: bytes, timestamp: str, delivery: str, body: bytes, *, path: str = PATH) -> str:
+    return hmac.digest(key, f"POST {path}\n{timestamp}\n{delivery}\n".encode() + body, "sha256").hex()
 
 
 def audit_rejection(db: Session, code: str) -> None:
@@ -61,6 +113,7 @@ def audit_rejection(db: Session, code: str) -> None:
 
 
 def register(app, db_session, limit):
+    @app.post(HL7_PATH)
     @app.post(PATH)
     async def receive(request: Request, db: Session = Depends(db_session)):
         stamp = request.headers.get("x-lab-timestamp", "")
@@ -73,6 +126,7 @@ def register(app, db_session, limit):
             or not re.fullmatch(r"[a-f0-9]{32}", delivery)
             or not re.fullmatch(r"[a-f0-9]{64}", supplied)
         ):
+            LOG.warning("lab_auth_denied")
             raise HTTPException(401, "Lab authentication unavailable")
         raw = bytearray()
         async for chunk in request.stream():
@@ -80,7 +134,9 @@ def register(app, db_session, limit):
                 raise HTTPException(413, "Lab event is too large")
             raw.extend(chunk)
         body = bytes(raw)
-        if not hmac.compare_digest(signature(secret(SIGNING_SECRET), stamp, delivery, body), supplied):
+        path = request.url.path
+        if not hmac.compare_digest(signature(secret(SIGNING_SECRET), stamp, delivery, body, path=path), supplied):
+            LOG.warning("lab_auth_denied")
             raise HTTPException(401, "Lab authentication unavailable")
         limit(db, Identity(LAB, LAB.id, 0))
         nonce = "signed-lab:" + delivery
@@ -89,7 +145,12 @@ def register(app, db_session, limit):
             raise HTTPException(409, "Lab delivery already received")
 
         try:
-            event = EVENT.validate_json(body)
+            if path == HL7_PATH:
+                event = EVENT.validate_python(decode_event(body))
+            else:
+                event = EVENT.validate_json(body)
+                if isinstance(event, BundleEvent):
+                    event = ReportEvent(kind="report", report=bundle_intake(event))
             subject = event.subject_id if isinstance(event, StageEvent) else event.report.subject_id
             sample = store.lab_sample(db, subject, for_update=True)
             if isinstance(event, StageEvent):

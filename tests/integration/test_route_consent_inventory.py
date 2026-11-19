@@ -25,7 +25,10 @@ PUBLIC = {
     ("GET", "/api/governance/data-sources"),
     ("POST", "/api/auth/persona"),
 }
-SIGNED_TRANSPORT = ("POST", "/api/integrations/lab/events")
+SIGNED_TRANSPORT = {
+    ("POST", "/api/integrations/lab/events"),
+    ("POST", "/api/integrations/lab/hl7"),
+}
 # These role-limited operations use caller input, public references or purpose-built
 # anonymized dispatch data. Each operation still writes an audit event.
 ROLE_ONLY = {
@@ -74,7 +77,7 @@ def unguarded(app):
             if method == "HEAD" and "GET" in route.methods:
                 continue
             key = method, route.path
-            if key in PUBLIC or key == SIGNED_TRANSPORT:
+            if key in PUBLIC or key in SIGNED_TRANSPORT:
                 continue
             authenticated = isinstance(route, APIRoute) and any(
                 getattr(dependency, "__qualname__", "") == "create_app.<locals>.authenticate"
